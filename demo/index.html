@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Thermostat Valve Card · simulated preview</title>
+  <style>
+    body {
+      margin: 0;
+      background: #e9ecf1;
+      color: #263b36;
+      font-family: system-ui, sans-serif;
+      padding: 32px;
+    }
+    main {
+      max-width: 520px;
+      margin: auto;
+      display: grid;
+      gap: 12px;
+    }
+    nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    button {
+      border: 1px solid #c3cec5;
+      border-radius: 10px;
+      background: white;
+      padding: 10px;
+      cursor: pointer;
+    }
+    h2 {
+      font-size: 15px;
+      margin: 12px 0 0 8px;
+      color: #4a5568;
+    }
+    body.dark {
+      background: #141a1f;
+      --primary-text-color: #e3e8ec;
+      --secondary-text-color: #aab4bd;
+      --ha-card-background: #232b32;
+      --card-background-color: #232b32;
+      --secondary-background-color: #2f3942;
+      --bubble-main-background-color: #232b32;
+      --bubble-secondary-background-color: #2f3942;
+    }
+    body.dark h2 {
+      color: #aab4bd;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+    }
+  </style>
+  <main>
+    <nav>
+      <button id="theme">Light / dark</button
+      ><button id="language">EN / NB</button
+      ><button id="offline">Toggle unavailable</button>
+    </nav>
+    <h2>Oppe</h2>
+    <div id="cards" style="display: grid; gap: 10px"></div>
+  </main>
+  <script type="module" src="./preview.ts"></script>
+</html>

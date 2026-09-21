@@ -52,6 +52,8 @@ export interface Valve {
   value?: number;
   /** A separate entity the reading comes from, for more-info. */
   entityId?: string;
+  /** The climate attribute the reading comes from, for history. */
+  attribute?: string;
 }
 /**
  * The valve opening, from (in order) the configured entity, a climate
@@ -70,7 +72,7 @@ export function valve(
   if (config.valve_entity) return read(config.valve_entity);
   for (const key of valveAttributes) {
     const value = numeric(climate?.attributes[key]);
-    if (value !== undefined) return { value };
+    if (value !== undefined) return { value, attribute: key };
   }
   const device = hass.entities?.[config.entity]?.device_id;
   if (!device) return;

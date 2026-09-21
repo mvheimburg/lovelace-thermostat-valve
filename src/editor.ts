@@ -57,7 +57,13 @@ export class ThermostatValveEditor extends LitElement {
     this.emit(next);
   }
   private text(
-    key: "entity" | "valve_entity" | "name" | "icon",
+    key:
+      | "entity"
+      | "valve_entity"
+      | "outdoor_entity"
+      | "flow_entity"
+      | "name"
+      | "icon",
     list?: string[],
     placeholder = "",
   ) {
@@ -87,6 +93,14 @@ export class ThermostatValveEditor extends LitElement {
         /^(sensor|number|input_number)\./.test(id) &&
         states[id].attributes.unit_of_measurement === "%",
     );
+    const temperatures = Object.keys(states).filter(
+      (id) =>
+        /^(sensor|number|input_number)\./.test(id) &&
+        (states[id].attributes.device_class === "temperature" ||
+          ["°C", "°F"].includes(
+            String(states[id].attributes.unit_of_measurement),
+          )),
+    );
     const appearance = this.config.appearance ?? "default";
     return html`<div class="editor">
       ${this.text("entity", climates, "climate.…")}
@@ -99,7 +113,9 @@ export class ThermostatValveEditor extends LitElement {
           @change=${(e: Event) => this.change("show_valve", e)}
         />${this.t("show_valve")}</label
       >
-      ${this.text("name")} ${this.text("icon", undefined, "mdi:sofa")}
+      ${this.text("outdoor_entity", temperatures, "sensor.…")}
+      ${this.text("flow_entity", temperatures, "sensor.…")} ${this.text("name")}
+      ${this.text("icon", undefined, "mdi:sofa")}
       <label
         >${this.t("appearance")}<select
           data-config="appearance"

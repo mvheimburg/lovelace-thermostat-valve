@@ -17,19 +17,22 @@ export interface HomeAssistant {
   entities?: Record<string, EntityEntry>;
   connection?: { connected: boolean };
   language?: string;
-  locale?: { language?: string; number_format?: string };
+  locale?: { language?: string; number_format?: string; time_format?: string };
   config?: { unit_system?: { temperature?: string } };
   callService(
     domain: string,
     service: string,
     data: Record<string, unknown>,
   ): Promise<unknown>;
+  callWS?<T>(message: Record<string, unknown>): Promise<T>;
 }
 export interface CardConfig {
   type: string;
   entity: string;
   valve_entity?: string;
   show_valve?: boolean;
+  outdoor_entity?: string;
+  flow_entity?: string;
   name?: string;
   icon?: string;
   appearance?: "default" | "bubble";

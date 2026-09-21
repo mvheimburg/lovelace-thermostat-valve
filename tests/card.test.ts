@@ -170,7 +170,7 @@ it("reads the valve from config, climate attributes or the same device", async (
   attr.states["climate.stue"] = climate({ pi_heating_demand: 12 });
   const fromAttribute = await card({}, attr);
   expect(text(fromAttribute.c, "[data-valve]")).toBe("12%");
-  expect(q(fromAttribute.c, "[data-valve]").tagName).toBe("SPAN");
+  expect(q(fromAttribute.c, "[data-valve]").tagName).toBe("BUTTON");
 
   const hidden = await card({ show_valve: false });
   expect(q(hidden.c, "[data-valve]")).toBeNull();
@@ -189,19 +189,200 @@ it("reads the valve from config, climate attributes or the same device", async (
   const unavailable = await card({}, down);
   expect(text(unavailable.c, "[data-valve]")).toBe("—");
   expect(q(unavailable.c, "[data-valve]").getAttribute("aria-label")).toBe(
-    "Valve opening: Unavailable",
+    "Valve opening: Unavailable. History",
   );
 });
 
-it("opens more-info for the thermostat and the valve entity", async () => {
-  const { c } = await card();
+const HOUR = 3_600_000;
+/** History replies as Home Assistant's websocket sends them (seconds). */
+function withHistory(hass: HomeAssistant, now: number, fail?: Error) {
+  const s = (ms: number) => ms / 1000;
+  hass.states["sensor.ute"] = state("sensor.ute", "4.5", {
+    device_class: "temperature",
+    unit_of_measurement: "°C",
+  });
+  hass.states["sensor.tur"] = state("sensor.tur", "30", {
+    device_class: "temperature",
+    unit_of_measurement: "°C",
+  });
+  const callWS = vi.fn(async (message: Record<string, unknown>) => {
+    if (fail) throw fail;
+    const ids = message.entity_ids as string[];
+    const rows: Record<string, unknown[]> = {
+      "climate.stue": [
+        { s: "heat", a: { current_temperature: 20.1 }, lu: s(now - 20 * HOUR) },
+        { s: "heat", a: { current_temperature: 21 }, lu: s(now - 10 * HOUR) },
+      ],
+      "sensor.stue_valve_opening": [
+        { s: "0", lu: s(now - 20 * HOUR) },
+        { s: "unavailable", lu: s(now - 12 * HOUR) },
+        { s: "80", lu: s(now - 8 * HOUR) },
+      ],
+      "sensor.ute": [{ s: "2", lu: s(now - 20 * HOUR) }],
+      "sensor.tur": [{ s: "28", lu: s(now - 20 * HOUR) }],
+    };
+    return Object.fromEntries(ids.map((id) => [id, rows[id] ?? []]));
+  });
+  hass.callWS = callWS as HomeAssistant["callWS"];
+  return callWS;
+}
+const settle = () => new Promise((r) => setTimeout(r, 0));
+const legend = (c: HTMLElement) =>
+  Array.from(c.shadowRoot!.querySelectorAll(".legend .item")).map((i) =>
+    i.textContent!.replace(/\s+/g, " ").trim(),
+  );
+
+it("opens one history of valve, room, outdoor and flow temperature from the valve or the name", async () => {
+  const now = Date.now();
+  const hass = fixture();
+  const callWS = withHistory(hass, now);
+  const { c } = await card(
+    { outdoor_entity: "sensor.ute", flow_entity: "sensor.tur" },
+    hass,
+  );
+  q<HTMLButtonElement>(c, "[data-valve]").click();
+  await c.updateComplete;
+  await settle();
+  await c.updateComplete;
+  const dialog = q<HTMLDialogElement>(c, "#history");
+  expect(dialog.open).toBe(true);
+  expect(text(c, "#history-title")).toBe("Oppholdsrom");
+  expect(callWS).toHaveBeenCalledTimes(2);
+  const [withAttributes, plain] = callWS.mock.calls.map((call) => call[0]);
+  expect(withAttributes).toMatchObject({
+    type: "history/history_during_period",
+    entity_ids: ["climate.stue"],
+    minimal_response: false,
+    no_attributes: false,
+    significant_changes_only: false,
+  });
+  expect(plain).toMatchObject({
+    entity_ids: ["sensor.stue_valve_opening", "sensor.ute", "sensor.tur"],
+    minimal_response: true,
+    no_attributes: true,
+  });
+  expect(Date.parse(String(plain.start_time))).toBeCloseTo(now - 24 * HOUR, -4);
+  // Current values, with the valve drawn as an area and three temperature lines.
+  expect(legend(c)).toEqual([
+    "Valve opening 35%",
+    "Room 21.3 °C",
+    "Outdoor 4.5 °C",
+    "Flow 30.0 °C",
+  ]);
+  expect(c.shadowRoot!.querySelectorAll(".chart .area.s-valve")).toHaveLength(
+    1,
+  );
+  expect(c.shadowRoot!.querySelectorAll(".chart .line")).toHaveLength(3);
+  // The unavailable spell leaves a gap: two separate filled runs.
+  expect(
+    q(c, ".chart .area.s-valve").getAttribute("d")!.match(/M/g),
+  ).toHaveLength(2);
+
+  dialog.close();
+  q<HTMLButtonElement>(c, "[data-name]").click();
+  await c.updateComplete;
+  expect(dialog.open).toBe(true);
+});
+
+it("shows the values under the pointer and reloads for another range", async () => {
+  const now = Date.now();
+  const hass = fixture();
+  const callWS = withHistory(hass, now);
+  const { c } = await card({ outdoor_entity: "sensor.ute" }, hass);
+  q<HTMLButtonElement>(c, "[data-valve]").click();
+  await settle();
+  await c.updateComplete;
+  const plot = q<HTMLElement>(c, ".plot");
+  const box = q(c, ".chart").getBoundingClientRect();
+  const width = q<SVGSVGElement>(c, ".chart").viewBox.baseVal.width;
+  // The plot spans x 40 to width − 44; a third in is 16 hours ago.
+  plot.dispatchEvent(
+    new PointerEvent("pointermove", {
+      clientX: box.left + ((40 + (width - 84) / 3) / width) * box.width,
+      bubbles: true,
+    }),
+  );
+  await c.updateComplete;
+  expect(legend(c)).toEqual([
+    "Valve opening 0%",
+    "Room 20.1 °C",
+    "Outdoor 2.0 °C",
+  ]);
+  expect(q(c, ".chart .cursor")).not.toBeNull();
+  plot.dispatchEvent(new PointerEvent("pointerleave"));
+  await c.updateComplete;
+  expect(text(c, ".when")).toBe("Now");
+
+  q<HTMLButtonElement>(c, '[data-range="168"]').click();
+  await settle();
+  await c.updateComplete;
+  expect(callWS).toHaveBeenCalledTimes(4);
+  expect(Date.parse(String(callWS.mock.calls[3][0].start_time))).toBeCloseTo(
+    now - 168 * HOUR,
+    -4,
+  );
+  expect(q(c, '[data-range="168"]').getAttribute("aria-pressed")).toBe("true");
+});
+
+it("explains a failed history request and speaks Bokmål", async () => {
+  const hass = fixture();
+  hass.language = "nb";
+  withHistory(hass, Date.now(), new Error("Recorder is off"));
+  const { c } = await card({}, hass);
+  q<HTMLButtonElement>(c, "[data-name]").click();
+  await settle();
+  await c.updateComplete;
+  expect(text(c, "#history [role=alert]")).toBe(
+    "Kunne ikke hente historikk: Recorder is off",
+  );
+  expect(
+    Array.from(c.shadowRoot!.querySelectorAll("[data-range]")).map((b) =>
+      b.textContent!.trim(),
+    ),
+  ).toEqual(["6 t", "24 t", "7 d"]);
+  expect(q(c, "[data-close]").getAttribute("aria-label")).toBe("Lukk");
+});
+
+it("opens more-info for the thermostat from the icon and for a line from the legend", async () => {
+  const hass = fixture();
+  withHistory(hass, Date.now());
+  const { c } = await card({ flow_entity: "sensor.tur" }, hass);
   const opened: string[] = [];
   c.addEventListener("hass-more-info", (e) =>
     opened.push((e as CustomEvent).detail.entityId),
   );
   q<HTMLButtonElement>(c, ".symbol").click();
   q<HTMLButtonElement>(c, "[data-valve]").click();
-  expect(opened).toEqual(["climate.stue", "sensor.stue_valve_opening"]);
+  await settle();
+  await c.updateComplete;
+  expect(opened).toEqual(["climate.stue"]);
+  q<HTMLButtonElement>(c, '[data-series="flow"]').click();
+  expect(q<HTMLDialogElement>(c, "#history").open).toBe(false);
+  expect(opened).toEqual(["climate.stue", "sensor.tur"]);
+});
+
+it("clears loaded history when the thermostat changes", async () => {
+  const hass = fixture();
+  withHistory(hass, Date.now());
+  const { c } = await card({}, hass);
+  q<HTMLButtonElement>(c, "[data-valve]").click();
+  await settle();
+  await c.updateComplete;
+  expect(legend(c).length).toBeGreaterThan(0);
+  c.setConfig({
+    type: "custom:thermostat-valve-card",
+    entity: "climate.other",
+  });
+  await c.updateComplete;
+  expect(q<HTMLDialogElement>(c, "#history").open).toBe(false);
+  expect(legend(c)).toEqual([]);
+  expect(() =>
+    c.setConfig({
+      type: "custom:thermostat-valve-card",
+      entity: "climate.stue",
+      outdoor_entity: "weather.home",
+    }),
+  ).toThrow("outdoor_entity");
 });
 
 it("shows a dual setpoint read-only instead of guessing which end to move", async () => {

@@ -14,6 +14,13 @@ export function normalizeConfig(config: CardConfig): CardConfig {
       !/^(sensor|number|input_number)\.\w+$/.test(config.valve_entity))
   )
     throw new Error("valve_entity must be a sensor or number entity");
+  for (const key of ["outdoor_entity", "flow_entity"] as const)
+    if (
+      config[key] !== undefined &&
+      (typeof config[key] !== "string" ||
+        !/^(sensor|input_number|number)\.\w+$/.test(config[key] ?? ""))
+    )
+      throw new Error(`${key} must be a sensor entity`);
   if (config.show_valve !== undefined && typeof config.show_valve !== "boolean")
     throw new Error("Invalid show_valve");
   if (

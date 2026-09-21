@@ -90,6 +90,17 @@ const en = {
   default: "Default",
   bubble: "Bubble",
   invalidValue: "Invalid value",
+  history: "History",
+  historyFailed: "Could not load history",
+  noHistory: "No history for this period",
+  loading: "Loading history…",
+  close: "Close",
+  now: "Now",
+  room: "Room",
+  outdoor: "Outdoor",
+  flow: "Flow",
+  outdoor_entity: "Outdoor temperature (for history)",
+  flow_entity: "Flow temperature (for history)",
 };
 const nb: typeof en = {
   heating: "Varmer",
@@ -123,6 +134,17 @@ const nb: typeof en = {
   default: "Standard",
   bubble: "Bubble",
   invalidValue: "Ugyldig verdi",
+  history: "Historikk",
+  historyFailed: "Kunne ikke hente historikk",
+  noHistory: "Ingen historikk for denne perioden",
+  loading: "Henter historikk …",
+  close: "Lukk",
+  now: "Nå",
+  room: "Rom",
+  outdoor: "Ute",
+  flow: "Tur",
+  outdoor_entity: "Utetemperatur (for historikk)",
+  flow_entity: "Turtemperatur (for historikk)",
 };
 export type TextKey = keyof typeof en;
 export function localize(hass: Context | undefined, key: TextKey): string {

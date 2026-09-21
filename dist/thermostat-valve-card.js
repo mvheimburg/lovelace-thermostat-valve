@@ -16,7 +16,7 @@ const t$2=globalThis,e$3=t$2.ShadowRoot&&(void 0===t$2.ShadyCSS||t$2.ShadyCSS.na
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t$1=globalThis,i$2=t=>t,s$1=t$1.trustedTypes,e$1=s$1?s$1.createPolicy("lit-html",{createHTML:t=>t}):void 0,h="$lit$",o$1=`lit$${Math.random().toFixed(9).slice(2)}$`,n="?"+o$1,r$1=`<${n}>`,l$1=document,c=()=>l$1.createComment(""),a=t=>null===t||"object"!=typeof t&&"function"!=typeof t,u=Array.isArray,d=t=>u(t)||"function"==typeof t?.[Symbol.iterator],f="[ \t\n\f\r]",v=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_=/-->/g,m$1=/>/g,p$1=RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),g=/'/g,$=/"/g,y=/^(?:script|style|textarea|title)$/i,x=t=>(i,...s)=>({_$litType$:t,strings:i,values:s}),b=x(1),w=x(2),E=Symbol.for("lit-noChange"),A=Symbol.for("lit-nothing"),C=new WeakMap,P=l$1.createTreeWalker(l$1,129);function V(t,i){if(!u(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==e$1?e$1.createHTML(i):i}const N=(t,i)=>{const s=t.length-1,e=[];let n,l=2===i?"<svg>":3===i?"<math>":"",c=v;for(let i=0;i<s;i++){const s=t[i];let a,u,d=-1,f=0;for(;f<s.length&&(c.lastIndex=f,u=c.exec(s),null!==u);)f=c.lastIndex,c===v?"!--"===u[1]?c=_:void 0!==u[1]?c=m$1:void 0!==u[2]?(y.test(u[2])&&(n=RegExp("</"+u[2],"g")),c=p$1):void 0!==u[3]&&(c=p$1):c===p$1?">"===u[0]?(c=n??v,d=-1):void 0===u[1]?d=-2:(d=c.lastIndex-u[2].length,a=u[1],c=void 0===u[3]?p$1:'"'===u[3]?$:g):c===$||c===g?c=p$1:c===_||c===m$1?c=v:(c=p$1,n=void 0);const x=c===p$1&&t[i+1].startsWith("/>")?" ":"";l+=c===v?s+r$1:d>=0?(e.push(a),s.slice(0,d)+h+s.slice(d)+o$1+x):s+o$1+(-2===d?i:x);}return [V(t,l+(t[s]||"<?>")+(2===i?"</svg>":3===i?"</math>":"")),e]};class S{constructor({strings:t,_$litType$:i},e){let r;this.parts=[];let l=0,a=0;const u=t.length-1,d=this.parts,[f,v]=N(t,i);if(this.el=S.createElement(f,e),P.currentNode=this.el.content,2===i||3===i){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes);}for(;null!==(r=P.nextNode())&&d.length<u;){if(1===r.nodeType){if(r.hasAttributes())for(const t of r.getAttributeNames())if(t.endsWith(h)){const i=v[a++],s=r.getAttribute(t).split(o$1),e=/([.?@])?(.*)/.exec(i);d.push({type:1,index:l,name:e[2],strings:s,ctor:"."===e[1]?I:"?"===e[1]?L:"@"===e[1]?z:H}),r.removeAttribute(t);}else t.startsWith(o$1)&&(d.push({type:6,index:l}),r.removeAttribute(t));if(y.test(r.tagName)){const t=r.textContent.split(o$1),i=t.length-1;if(i>0){r.textContent=s$1?s$1.emptyScript:"";for(let s=0;s<i;s++)r.append(t[s],c()),P.nextNode(),d.push({type:2,index:++l});r.append(t[i],c());}}}else if(8===r.nodeType)if(r.data===n)d.push({type:2,index:l});else {let t=-1;for(;-1!==(t=r.data.indexOf(o$1,t+1));)d.push({type:7,index:l}),t+=o$1.length-1;}l++;}}static createElement(t,i){const s=l$1.createElement("template");return s.innerHTML=t,s}}function M(t,i,s=t,e){if(i===E)return i;let h=void 0!==e?s._$Co?.[e]:s._$Cl;const o=a(i)?void 0:i._$litDirective$;return h?.constructor!==o&&(h?._$AO?.(false),void 0===o?h=void 0:(h=new o(t),h._$AT(t,s,e)),void 0!==e?(s._$Co??=[])[e]=h:s._$Cl=h),void 0!==h&&(i=M(t,h._$AS(t,i.values),h,e)),i}class R{constructor(t,i){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=i;}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:i},parts:s}=this._$AD,e=(t?.creationScope??l$1).importNode(i,true);P.currentNode=e;let h=P.nextNode(),o=0,n=0,r=s[0];for(;void 0!==r;){if(o===r.index){let i;2===r.type?i=new k(h,h.nextSibling,this,t):1===r.type?i=new r.ctor(h,r.name,r.strings,this,t):6===r.type&&(i=new Z(h,this,t)),this._$AV.push(i),r=s[++n];}o!==r?.index&&(h=P.nextNode(),o++);}return P.currentNode=l$1,e}p(t){let i=0;for(const s of this._$AV) void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,i),i+=s.strings.length-2):s._$AI(t[i])),i++;}}class k{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,i,s,e){this.type=2,this._$AH=A,this._$AN=void 0,this._$AA=t,this._$AB=i,this._$AM=s,this.options=e,this._$Cv=e?.isConnected??true;}get parentNode(){let t=this._$AA.parentNode;const i=this._$AM;return void 0!==i&&11===t?.nodeType&&(t=i.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,i=this){t=M(this,t,i),a(t)?t===A||null==t||""===t?(this._$AH!==A&&this._$AR(),this._$AH=A):t!==this._$AH&&t!==E&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):d(t)?this.k(t):this._(t);}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t));}_(t){this._$AH!==A&&a(this._$AH)?this._$AA.nextSibling.data=t:this.T(l$1.createTextNode(t)),this._$AH=t;}$(t){const{values:i,_$litType$:s}=t,e="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=S.createElement(V(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===e)this._$AH.p(i);else {const t=new R(e,this),s=t.u(this.options);t.p(i),this.T(s),this._$AH=t;}}_$AC(t){let i=C.get(t.strings);return void 0===i&&C.set(t.strings,i=new S(t)),i}k(t){u(this._$AH)||(this._$AH=[],this._$AR());const i=this._$AH;let s,e=0;for(const h of t)e===i.length?i.push(s=new k(this.O(c()),this.O(c()),this,this.options)):s=i[e],s._$AI(h),e++;e<i.length&&(this._$AR(s&&s._$AB.nextSibling,e),i.length=e);}_$AR(t=this._$AA.nextSibling,s){for(this._$AP?.(false,true,s);t!==this._$AB;){const s=i$2(t).nextSibling;i$2(t).remove(),t=s;}}setConnected(t){ void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t));}}class H{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,i,s,e,h){this.type=1,this._$AH=A,this._$AN=void 0,this.element=t,this.name=i,this._$AM=e,this.options=h,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=A;}_$AI(t,i=this,s,e){const h=this.strings;let o=false;if(void 0===h)t=M(this,t,i,0),o=!a(t)||t!==this._$AH&&t!==E,o&&(this._$AH=t);else {const e=t;let n,r;for(t=h[0],n=0;n<h.length-1;n++)r=M(this,e[s+n],i,n),r===E&&(r=this._$AH[n]),o||=!a(r)||r!==this._$AH[n],r===A?t=A:t!==A&&(t+=(r??"")+h[n+1]),this._$AH[n]=r;}o&&!e&&this.j(t);}j(t){t===A?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"");}}class I extends H{constructor(){super(...arguments),this.type=3;}j(t){this.element[this.name]=t===A?void 0:t;}}class L extends H{constructor(){super(...arguments),this.type=4;}j(t){this.element.toggleAttribute(this.name,!!t&&t!==A);}}class z extends H{constructor(t,i,s,e,h){super(t,i,s,e,h),this.type=5;}_$AI(t,i=this){if((t=M(this,t,i,0)??A)===E)return;const s=this._$AH,e=t===A&&s!==A||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,h=t!==A&&(s===A||e);e&&this.element.removeEventListener(this.name,this,s),h&&this.element.addEventListener(this.name,this,t),this._$AH=t;}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t);}}class Z{constructor(t,i,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=i,this.options=s;}get _$AU(){return this._$AM._$AU}_$AI(t){M(this,t);}}const B=t$1.litHtmlPolyfillSupport;B?.(S,k),(t$1.litHtmlVersions??=[]).push("3.3.3");const D=(t,i,s)=>{const e=s?.renderBefore??i;let h=e._$litPart$;if(void 0===h){const t=s?.renderBefore??null;e._$litPart$=h=new k(i.insertBefore(c(),t),t,void 0,s??{});}return h._$AI(t),h};
+const t$1=globalThis,i$2=t=>t,s$1=t$1.trustedTypes,e$1=s$1?s$1.createPolicy("lit-html",{createHTML:t=>t}):void 0,h="$lit$",o$1=`lit$${Math.random().toFixed(9).slice(2)}$`,n="?"+o$1,r$1=`<${n}>`,l$1=document,c=()=>l$1.createComment(""),a=t=>null===t||"object"!=typeof t&&"function"!=typeof t,u=Array.isArray,d=t=>u(t)||"function"==typeof t?.[Symbol.iterator],f="[ \t\n\f\r]",v=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_=/-->/g,m$1=/>/g,p$1=RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),g=/'/g,$=/"/g,y=/^(?:script|style|textarea|title)$/i,x=t=>(i,...s)=>({_$litType$:t,strings:i,values:s}),b=x(1),w=x(2),E=Symbol.for("lit-noChange"),A=Symbol.for("lit-nothing"),C=new WeakMap,P=l$1.createTreeWalker(l$1,129);function V(t,i){if(!u(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==e$1?e$1.createHTML(i):i}const N=(t,i)=>{const s=t.length-1,e=[];let n,l=2===i?"<svg>":3===i?"<math>":"",c=v;for(let i=0;i<s;i++){const s=t[i];let a,u,d=-1,f=0;for(;f<s.length&&(c.lastIndex=f,u=c.exec(s),null!==u);)f=c.lastIndex,c===v?"!--"===u[1]?c=_:void 0!==u[1]?c=m$1:void 0!==u[2]?(y.test(u[2])&&(n=RegExp("</"+u[2],"g")),c=p$1):void 0!==u[3]&&(c=p$1):c===p$1?">"===u[0]?(c=n??v,d=-1):void 0===u[1]?d=-2:(d=c.lastIndex-u[2].length,a=u[1],c=void 0===u[3]?p$1:'"'===u[3]?$:g):c===$||c===g?c=p$1:c===_||c===m$1?c=v:(c=p$1,n=void 0);const x=c===p$1&&t[i+1].startsWith("/>")?" ":"";l+=c===v?s+r$1:d>=0?(e.push(a),s.slice(0,d)+h+s.slice(d)+o$1+x):s+o$1+(-2===d?i:x);}return [V(t,l+(t[s]||"<?>")+(2===i?"</svg>":3===i?"</math>":"")),e]};class S{constructor({strings:t,_$litType$:i},e){let r;this.parts=[];let l=0,a=0;const u=t.length-1,d=this.parts,[f,v]=N(t,i);if(this.el=S.createElement(f,e),P.currentNode=this.el.content,2===i||3===i){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes);}for(;null!==(r=P.nextNode())&&d.length<u;){if(1===r.nodeType){if(r.hasAttributes())for(const t of r.getAttributeNames())if(t.endsWith(h)){const i=v[a++],s=r.getAttribute(t).split(o$1),e=/([.?@])?(.*)/.exec(i);d.push({type:1,index:l,name:e[2],strings:s,ctor:"."===e[1]?I:"?"===e[1]?L:"@"===e[1]?z:H$1}),r.removeAttribute(t);}else t.startsWith(o$1)&&(d.push({type:6,index:l}),r.removeAttribute(t));if(y.test(r.tagName)){const t=r.textContent.split(o$1),i=t.length-1;if(i>0){r.textContent=s$1?s$1.emptyScript:"";for(let s=0;s<i;s++)r.append(t[s],c()),P.nextNode(),d.push({type:2,index:++l});r.append(t[i],c());}}}else if(8===r.nodeType)if(r.data===n)d.push({type:2,index:l});else {let t=-1;for(;-1!==(t=r.data.indexOf(o$1,t+1));)d.push({type:7,index:l}),t+=o$1.length-1;}l++;}}static createElement(t,i){const s=l$1.createElement("template");return s.innerHTML=t,s}}function M(t,i,s=t,e){if(i===E)return i;let h=void 0!==e?s._$Co?.[e]:s._$Cl;const o=a(i)?void 0:i._$litDirective$;return h?.constructor!==o&&(h?._$AO?.(false),void 0===o?h=void 0:(h=new o(t),h._$AT(t,s,e)),void 0!==e?(s._$Co??=[])[e]=h:s._$Cl=h),void 0!==h&&(i=M(t,h._$AS(t,i.values),h,e)),i}class R{constructor(t,i){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=i;}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:i},parts:s}=this._$AD,e=(t?.creationScope??l$1).importNode(i,true);P.currentNode=e;let h=P.nextNode(),o=0,n=0,r=s[0];for(;void 0!==r;){if(o===r.index){let i;2===r.type?i=new k(h,h.nextSibling,this,t):1===r.type?i=new r.ctor(h,r.name,r.strings,this,t):6===r.type&&(i=new Z(h,this,t)),this._$AV.push(i),r=s[++n];}o!==r?.index&&(h=P.nextNode(),o++);}return P.currentNode=l$1,e}p(t){let i=0;for(const s of this._$AV) void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,i),i+=s.strings.length-2):s._$AI(t[i])),i++;}}class k{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,i,s,e){this.type=2,this._$AH=A,this._$AN=void 0,this._$AA=t,this._$AB=i,this._$AM=s,this.options=e,this._$Cv=e?.isConnected??true;}get parentNode(){let t=this._$AA.parentNode;const i=this._$AM;return void 0!==i&&11===t?.nodeType&&(t=i.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,i=this){t=M(this,t,i),a(t)?t===A||null==t||""===t?(this._$AH!==A&&this._$AR(),this._$AH=A):t!==this._$AH&&t!==E&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):d(t)?this.k(t):this._(t);}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t));}_(t){this._$AH!==A&&a(this._$AH)?this._$AA.nextSibling.data=t:this.T(l$1.createTextNode(t)),this._$AH=t;}$(t){const{values:i,_$litType$:s}=t,e="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=S.createElement(V(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===e)this._$AH.p(i);else {const t=new R(e,this),s=t.u(this.options);t.p(i),this.T(s),this._$AH=t;}}_$AC(t){let i=C.get(t.strings);return void 0===i&&C.set(t.strings,i=new S(t)),i}k(t){u(this._$AH)||(this._$AH=[],this._$AR());const i=this._$AH;let s,e=0;for(const h of t)e===i.length?i.push(s=new k(this.O(c()),this.O(c()),this,this.options)):s=i[e],s._$AI(h),e++;e<i.length&&(this._$AR(s&&s._$AB.nextSibling,e),i.length=e);}_$AR(t=this._$AA.nextSibling,s){for(this._$AP?.(false,true,s);t!==this._$AB;){const s=i$2(t).nextSibling;i$2(t).remove(),t=s;}}setConnected(t){ void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t));}}let H$1 = class H{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,i,s,e,h){this.type=1,this._$AH=A,this._$AN=void 0,this.element=t,this.name=i,this._$AM=e,this.options=h,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=A;}_$AI(t,i=this,s,e){const h=this.strings;let o=false;if(void 0===h)t=M(this,t,i,0),o=!a(t)||t!==this._$AH&&t!==E,o&&(this._$AH=t);else {const e=t;let n,r;for(t=h[0],n=0;n<h.length-1;n++)r=M(this,e[s+n],i,n),r===E&&(r=this._$AH[n]),o||=!a(r)||r!==this._$AH[n],r===A?t=A:t!==A&&(t+=(r??"")+h[n+1]),this._$AH[n]=r;}o&&!e&&this.j(t);}j(t){t===A?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"");}};class I extends H$1{constructor(){super(...arguments),this.type=3;}j(t){this.element[this.name]=t===A?void 0:t;}}class L extends H$1{constructor(){super(...arguments),this.type=4;}j(t){this.element.toggleAttribute(this.name,!!t&&t!==A);}}class z extends H$1{constructor(t,i,s,e,h){super(t,i,s,e,h),this.type=5;}_$AI(t,i=this){if((t=M(this,t,i,0)??A)===E)return;const s=this._$AH,e=t===A&&s!==A||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,h=t!==A&&(s===A||e);e&&this.element.removeEventListener(this.name,this,s),h&&this.element.addEventListener(this.name,this,t),this._$AH=t;}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t);}}class Z{constructor(t,i,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=i,this.options=s;}get _$AU(){return this._$AM._$AU}_$AI(t){M(this,t);}}const B=t$1.litHtmlPolyfillSupport;B?.(S,k),(t$1.litHtmlVersions??=[]).push("3.3.3");const D=(t,i,s)=>{const e=s?.renderBefore??i;let h=e._$litPart$;if(void 0===h){const t=s?.renderBefore??null;e._$litPart$=h=new k(i.insertBefore(c(),t),t,void 0,s??{});}return h._$AI(t),h};
 
 /**
  * @license
@@ -189,6 +189,11 @@ function normalizeConfig(config) {
         (typeof config.valve_entity !== "string" ||
             !/^(sensor|number|input_number)\.\w+$/.test(config.valve_entity)))
         throw new Error("valve_entity must be a sensor or number entity");
+    for (const key of ["outdoor_entity", "flow_entity"])
+        if (config[key] !== undefined &&
+            (typeof config[key] !== "string" ||
+                !/^(sensor|input_number|number)\.\w+$/.test(config[key] ?? "")))
+            throw new Error(`${key} must be a sensor entity`);
     if (config.show_valve !== undefined && typeof config.show_valve !== "boolean")
         throw new Error("Invalid show_valve");
     if (config.appearance !== undefined &&
@@ -267,7 +272,7 @@ function valve(hass, config, climate) {
     for (const key of valveAttributes) {
         const value = numeric(climate?.attributes[key]);
         if (value !== undefined)
-            return { value };
+            return { value, attribute: key };
     }
     const device = hass.entities?.[config.entity]?.device_id;
     if (!device)
@@ -396,6 +401,17 @@ const en = {
     default: "Default",
     bubble: "Bubble",
     invalidValue: "Invalid value",
+    history: "History",
+    historyFailed: "Could not load history",
+    noHistory: "No history for this period",
+    loading: "Loading history…",
+    close: "Close",
+    now: "Now",
+    room: "Room",
+    outdoor: "Outdoor",
+    flow: "Flow",
+    outdoor_entity: "Outdoor temperature (for history)",
+    flow_entity: "Flow temperature (for history)",
 };
 const nb = {
     heating: "Varmer",
@@ -429,6 +445,17 @@ const nb = {
     default: "Standard",
     bubble: "Bubble",
     invalidValue: "Ugyldig verdi",
+    history: "Historikk",
+    historyFailed: "Kunne ikke hente historikk",
+    noHistory: "Ingen historikk for denne perioden",
+    loading: "Henter historikk …",
+    close: "Lukk",
+    now: "Nå",
+    room: "Rom",
+    outdoor: "Ute",
+    flow: "Tur",
+    outdoor_entity: "Utetemperatur (for historikk)",
+    flow_entity: "Turtemperatur (for historikk)",
 };
 function localize(hass, key) {
     return (language(hass) === "nb" ? nb : en)[key];
@@ -676,6 +703,150 @@ const styles = i$4 `
       transition: none;
     }
   }
+  /* History: one chart of the valve (area) and the temperatures (lines). */
+  .s-valve {
+    --series: var(--tv-heat);
+  }
+  .s-room {
+    --series: var(--primary-text-color, #1b1b1a);
+  }
+  .s-outdoor {
+    --series: var(--tv-cool);
+  }
+  .s-flow {
+    --series: var(--purple-color, #926bc7);
+  }
+  dialog {
+    color: var(--primary-text-color, #1b1b1a);
+    background: var(--tv-surface);
+    border: 0;
+    border-radius: min(var(--tv-radius), 28px);
+    padding: 16px 16px 20px;
+    width: min(640px, calc(100vw - 24px));
+    max-height: 90dvh;
+    overflow: auto;
+    box-shadow: 0 16px 60px #0006;
+  }
+  dialog::backdrop {
+    background: #0007;
+  }
+  .history-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .history-head h2 {
+    flex: 1;
+    margin: 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .close {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    background: var(--tv-pill);
+  }
+  .ranges {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0 6px;
+  }
+  .ranges button {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 18px;
+    background: var(--tv-pill);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .ranges button[aria-pressed="true"] {
+    background: color-mix(
+      in srgb,
+      var(--primary-color, #03a9f4) 22%,
+      var(--tv-pill)
+    );
+  }
+  .plot {
+    min-height: 120px;
+    touch-action: pan-y;
+  }
+  .chart {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .chart .grid {
+    stroke: color-mix(in srgb, var(--tv-muted) 22%, transparent);
+    stroke-width: 1;
+  }
+  .chart .axis {
+    fill: var(--tv-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart .line {
+    fill: none;
+    stroke: var(--series);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .chart .edge {
+    fill: none;
+    stroke: var(--series);
+    stroke-width: 1.5;
+  }
+  .chart .area {
+    fill: color-mix(in srgb, var(--series) 28%, transparent);
+    stroke: none;
+  }
+  .chart .cursor {
+    stroke: var(--tv-muted);
+    stroke-dasharray: 3 3;
+  }
+  .plot .hint {
+    margin: 40px 0;
+    text-align: center;
+    color: var(--tv-muted);
+  }
+  .when {
+    margin: 4px 4px 6px;
+    font-size: 12px;
+    color: var(--tv-muted);
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 6px;
+  }
+  .legend .item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 2px 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 16px;
+    background: var(--tv-pill);
+    text-align: start;
+  }
+  .legend .swatch {
+    grid-row: span 2;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--series);
+  }
+  .legend .label {
+    font-size: 12px;
+    color: var(--tv-muted);
+  }
+  .legend strong {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
   .editor {
     display: grid;
     gap: 14px;
@@ -709,6 +880,191 @@ const styles = i$4 `
   }
   ${colorSchemeStyles}
 `;
+
+const RANGES = [6, 24, 168];
+function read(source, state, attributes) {
+    if (["unavailable", "unknown", ""].includes(state))
+        return undefined;
+    return source.attribute
+        ? numeric(attributes?.[source.attribute])
+        : numeric(state);
+}
+/**
+ * The history of every source over the last `hours`, ending with the current
+ * state. Attribute sources need attributes on every row; the others do not.
+ */
+async function loadHistory(hass, sources, hours, now = Date.now()) {
+    if (!hass.callWS)
+        throw new Error("Home Assistant history API unavailable");
+    const start = new Date(now - hours * 3600000).toISOString();
+    const ask = async (list, attributes) => list.length
+        ? hass.callWS({
+            type: "history/history_during_period",
+            start_time: start,
+            entity_ids: [...new Set(list.map((s) => s.entityId))],
+            minimal_response: !attributes,
+            no_attributes: !attributes,
+            significant_changes_only: false,
+        })
+        : {};
+    const [withAttributes, plain] = await Promise.all([
+        ask(sources.filter((s) => s.attribute), true),
+        ask(sources.filter((s) => !s.attribute), false),
+    ]);
+    return sources.map((source) => {
+        const rows = (source.attribute ? withAttributes : plain)[source.entityId];
+        const points = (rows ?? []).map((row) => [
+            Math.max(Date.parse(start), (row.lu ?? row.lc ?? 0) * 1000),
+            read(source, row.s, row.a),
+        ]);
+        const current = hass.states[source.entityId];
+        if (current)
+            points.push([
+                now,
+                available(current)
+                    ? read(source, current.state, current.attributes)
+                    : undefined,
+            ]);
+        return { ...source, points };
+    });
+}
+/** The value in force at `time`: the last point at or before it. */
+function valueAt(series, time) {
+    let value;
+    for (const [t, v] of series.points) {
+        if (t > time)
+            break;
+        value = v;
+    }
+    return value;
+}
+/** Round-number ticks covering [min, max], about `count` of them. */
+function ticks(min, max, count = 4) {
+    const raw = (max - min) / count || 1;
+    const power = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 2.5, 5, 10].map((m) => m * power).find((s) => s >= raw) ??
+        10 * power;
+    const out = [];
+    for (let v = Math.floor(min / step) * step; v <= max + step / 2; v += step)
+        out.push(Number(v.toFixed(6)));
+    return out;
+}
+
+const LEFT = 40, TOP = 10, BOTTOM = 196, H = 230;
+/** Room kept right of the plot for the percent axis. */
+const RIGHT_GUTTER = 44;
+/** Split into runs of known values, so an unavailable spell leaves a gap. */
+function runs(points) {
+    const out = [];
+    let current = [];
+    for (const [t, v] of points) {
+        if (v === undefined) {
+            if (current.length)
+                out.push(current);
+            current = [];
+        }
+        else
+            current.push([t, v]);
+    }
+    if (current.length)
+        out.push(current);
+    return out;
+}
+/**
+ * Valve opening as a stepped area on a 0–100 % scale (right axis), and the
+ * temperatures as lines on a shared °C scale (left axis).
+ */
+function chart(series, start, end, hover, text, 
+/** Drawn at its on-screen width, so the axis text stays 12 px on a phone. */
+W = 600) {
+    const RIGHT = W - RIGHT_GUTTER;
+    const temps = series.filter((s) => s.key !== "valve");
+    const valve = series.find((s) => s.key === "valve");
+    const values = temps.flatMap((s) => s.points.flatMap(([, v]) => (v === undefined ? [] : [v])));
+    const lo = values.length ? Math.min(...values) : 0, hi = values.length ? Math.max(...values) : 30;
+    const yTicks = ticks(Math.floor(lo - 1), Math.ceil(hi + 1));
+    const yMin = yTicks[0], yMax = yTicks[yTicks.length - 1];
+    const x = (t) => LEFT +
+        ((Math.min(Math.max(t, start), end) - start) / (end - start)) *
+            (RIGHT - LEFT);
+    const y = (v) => BOTTOM - ((v - yMin) / (yMax - yMin || 1)) * (BOTTOM - TOP);
+    const yPct = (v) => BOTTOM - (Math.min(100, Math.max(0, v)) / 100) * (BOTTOM - TOP);
+    const hours = (end - start) / 3600000;
+    // Hours between time labels; fewer of them on a phone-width chart.
+    const narrow = W < 480;
+    const every = hours <= 6
+        ? narrow
+            ? 2
+            : 1
+        : hours <= 24
+            ? narrow
+                ? 6
+                : 4
+            : narrow
+                ? 48
+                : 24;
+    const xTicks = [];
+    const hour = new Date(start);
+    hour.setMinutes(0, 0, 0);
+    let midnights = 0;
+    for (let t = hour.getTime(); t <= end; t += 3600000) {
+        const h = new Date(t).getHours();
+        if (t < start)
+            continue;
+        if (every >= 24
+            ? h === 0 && midnights++ % (every / 24) === 0
+            : h % every === 0)
+            xTicks.push(t);
+    }
+    const line = (points) => runs(points)
+        .map((run) => run
+        .map(([t, v], i) => `${i ? "L" : "M"}${x(t).toFixed(1)},${y(v).toFixed(1)}`)
+        .join(" "))
+        .join(" ");
+    // The valve holds each reading until the next one, as a valve does.
+    const steps = (run) => run
+        .map(([t, v], i) => {
+        const next = run[i + 1];
+        return `${x(t).toFixed(1)},${yPct(v).toFixed(1)}${next ? ` L${x(next[0]).toFixed(1)},${yPct(v).toFixed(1)}` : ""}`;
+    })
+        .join(" L");
+    const edge = (points) => runs(points)
+        .map((run) => `M${steps(run)}`)
+        .join(" ");
+    const area = (points) => runs(points)
+        .map((run) => {
+        const last = run[run.length - 1];
+        return `M${x(run[0][0]).toFixed(1)},${BOTTOM} L${steps(run)} L${x(last[0]).toFixed(1)},${BOTTOM} Z`;
+    })
+        .join(" ");
+    return w `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label=${text.label}>
+    <title>${text.label}</title>
+    ${yTicks.map((v) => w `<line class="grid" x1=${LEFT} x2=${RIGHT} y1=${y(v)} y2=${y(v)}></line>
+        <text class="axis" x=${LEFT - 6} y=${y(v) + 4} text-anchor="end">${text.number(v, 0)}°</text>`)}
+    ${valve
+        ? [0, 50, 100].map((v) => w `<text class="axis" x=${RIGHT + 6} y=${yPct(v) + 4}>${text.percent(v)}</text>`)
+        : A}
+    ${xTicks.map((t) => w `<line class="grid" x1=${x(t)} x2=${x(t)} y1=${TOP} y2=${BOTTOM}></line>
+        <text class="axis" x=${x(t)} y=${BOTTOM + 18} text-anchor="middle">${text.time(t, every >= 24)}</text>`)}
+    ${valve
+        ? w `<path class="area s-valve" d=${area(valve.points)}></path>
+            <path class="edge s-valve" d=${edge(valve.points)}></path>`
+        : A}
+    ${temps.map((s) => w `<path class=${`line s-${s.key}`} d=${line(s.points)}></path>`)}
+    ${hover === undefined
+        ? A
+        : w `<line class="cursor" x1=${x(hover)} x2=${x(hover)} y1=${TOP} y2=${BOTTOM}></line>`}
+  </svg>`;
+}
+/** The time under a pointer over the chart. */
+function timeAt(event, element, start, end) {
+    const box = element.getBoundingClientRect();
+    const W = element.viewBox?.baseVal?.width || box.width;
+    const RIGHT = W - RIGHT_GUTTER;
+    const px = ((event.clientX - box.left) / box.width) * W;
+    const ratio = (px - LEFT) / (RIGHT - LEFT);
+    return start + Math.min(1, Math.max(0, ratio)) * (end - start);
+}
 
 class ThermostatValveEditor extends i$1 {
     constructor() {
@@ -781,6 +1137,9 @@ class ThermostatValveEditor extends i$1 {
         const climates = Object.keys(states).filter((id) => id.startsWith("climate."));
         const valves = Object.keys(states).filter((id) => /^(sensor|number|input_number)\./.test(id) &&
             states[id].attributes.unit_of_measurement === "%");
+        const temperatures = Object.keys(states).filter((id) => /^(sensor|number|input_number)\./.test(id) &&
+            (states[id].attributes.device_class === "temperature" ||
+                ["°C", "°F"].includes(String(states[id].attributes.unit_of_measurement))));
         const appearance = this.config.appearance ?? "default";
         return b `<div class="editor">
       ${this.text("entity", climates, "climate.…")}
@@ -793,7 +1152,9 @@ class ThermostatValveEditor extends i$1 {
           @change=${(e) => this.change("show_valve", e)}
         />${this.t("show_valve")}</label
       >
-      ${this.text("name")} ${this.text("icon", undefined, "mdi:sofa")}
+      ${this.text("outdoor_entity", temperatures, "sensor.…")}
+      ${this.text("flow_entity", temperatures, "sensor.…")} ${this.text("name")}
+      ${this.text("icon", undefined, "mdi:sofa")}
       <label
         >${this.t("appearance")}<select
           data-config="appearance"
@@ -824,6 +1185,12 @@ class ThermostatValveCard extends i$1 {
         this.sending = false;
         this.error = "";
         this.epoch = 0;
+        /** The history dialog: chosen range, loaded series and the hovered time. */
+        this.range = 24;
+        this.loading = false;
+        this.historyError = "";
+        this.historyTicket = 0;
+        this.plotWidth = 600;
         this.t = (key) => localize(this.ha, key);
     }
     get hass() {
@@ -847,8 +1214,23 @@ class ThermostatValveCard extends i$1 {
         this.setAttribute("appearance", next.appearance ?? "default");
         this.requestUpdate();
     }
+    updated() {
+        const plot = this.shadowRoot?.querySelector(".plot");
+        if (!plot || this.resize)
+            return;
+        this.resize = new ResizeObserver(([entry]) => {
+            const width = Math.round(entry.contentRect.width);
+            if (width > 0 && Math.abs(width - this.plotWidth) > 4) {
+                this.plotWidth = width;
+                this.requestUpdate();
+            }
+        });
+        this.resize.observe(plot);
+    }
     disconnectedCallback() {
         super.disconnectedCallback();
+        this.resize?.disconnect();
+        this.resize = undefined;
         // A target the user already chose is still sent when the view closes.
         if (this.commitTimer) {
             clearTimeout(this.commitTimer);
@@ -870,6 +1252,11 @@ class ThermostatValveCard extends i$1 {
         this.draft = this.sent = undefined;
         this.sending = false;
         this.error = "";
+        this.historyTicket++;
+        this.series = this.window = this.hover = undefined;
+        this.loading = false;
+        this.historyError = "";
+        this.dialog?.close();
     }
     settle() {
         clearTimeout(this.confirmTimer);
@@ -945,6 +1332,76 @@ class ThermostatValveCard extends i$1 {
         }
         this.requestUpdate();
     }
+    get dialog() {
+        return this.shadowRoot?.querySelector("#history");
+    }
+    /** Valve, room, outdoor and flow temperature: whichever this room has. */
+    sources() {
+        const config = this.config;
+        const climate = this.climate;
+        const out = [];
+        const v = climate ? valve(this.ha, config, climate) : undefined;
+        if (v?.entityId)
+            out.push({ key: "valve", entityId: v.entityId });
+        else if (v?.attribute)
+            out.push({
+                key: "valve",
+                entityId: config.entity,
+                attribute: v.attribute,
+            });
+        out.push({
+            key: "room",
+            entityId: config.entity,
+            attribute: "current_temperature",
+        });
+        if (config.outdoor_entity)
+            out.push({ key: "outdoor", entityId: config.outdoor_entity });
+        if (config.flow_entity)
+            out.push({ key: "flow", entityId: config.flow_entity });
+        return out;
+    }
+    async openHistory() {
+        if (!this.config || !this.ha)
+            return;
+        await this.updateComplete;
+        const dialog = this.dialog;
+        if (dialog && !dialog.open)
+            dialog.showModal();
+        void this.loadHistory();
+    }
+    async loadHistory(range = this.range) {
+        if (!this.ha)
+            return;
+        const ticket = ++this.historyTicket;
+        this.range = range;
+        this.loading = true;
+        this.historyError = "";
+        this.hover = undefined;
+        this.requestUpdate();
+        const end = Date.now();
+        try {
+            const series = await loadHistory(this.ha, this.sources(), range, end);
+            if (ticket !== this.historyTicket)
+                return;
+            this.series = series;
+            this.window = [end - range * 3600000, end];
+        }
+        catch (error) {
+            if (ticket !== this.historyTicket)
+                return;
+            this.series = this.window = undefined;
+            this.historyError = `${this.t("historyFailed")}: ${error instanceof Error
+                ? error.message
+                : typeof error === "object" && error && "message" in error
+                    ? String(error.message)
+                    : String(error)}`;
+        }
+        this.loading = false;
+        this.requestUpdate();
+    }
+    closeHistory() {
+        this.dialog?.close();
+    }
     info(entityId) {
         if (!entityId)
             return;
@@ -989,24 +1446,15 @@ class ThermostatValveCard extends i$1 {
               ></circle>`
             : A}</svg
       ><span>${text}</span>`;
-        return v.entityId
-            ? b `<button
-          class="valve"
-          data-valve
-          aria-label=${label}
-          title=${label}
-          @click=${() => this.info(v.entityId)}
-        >
-          ${ring}
-        </button>`
-            : b `<span
-          class="valve"
-          data-valve
-          role="img"
-          aria-label=${label}
-          title=${label}
-          >${ring}</span
-        >`;
+        return b `<button
+      class="valve"
+      data-valve
+      aria-label=${`${label}. ${this.t("history")}`}
+      title=${label}
+      @click=${() => void this.openHistory()}
+    >
+      ${ring}
+    </button>`;
     }
     control(climate) {
         if (!climate)
@@ -1058,24 +1506,134 @@ class ThermostatValveCard extends i$1 {
         const icon = this.config.icon ?? String(climate?.attributes.icon ?? "mdi:thermostat");
         const v = climate ? valve(this.ha, this.config, climate) : undefined;
         return b `<ha-card
-      class=${`tone-${climate ? tone(climate) : "unavailable"}`}
+        class=${`tone-${climate ? tone(climate) : "unavailable"}`}
+      >
+        <div class="row">
+          <button
+            class="symbol"
+            aria-label=${name}
+            @click=${() => this.info(this.config?.entity)}
+          >
+            <ha-icon .icon=${icon}></ha-icon>
+          </button>
+          <button
+            class="name"
+            data-name
+            aria-label=${`${name}: ${this.t("history")}`}
+            @click=${() => void this.openHistory()}
+          >
+            <span class="title">${name}</span>
+            <span class="status" data-status>${this.statusLine(climate)}</span>
+          </button>
+          ${this.valveView(v)}${this.control(climate)}
+        </div>
+        ${this.error ? b `<p class="error" role="alert">${this.error}</p>` : A}
+      </ha-card>
+      ${this.historyDialog(name)}`;
+    }
+    historyDialog(name) {
+        const hour12 = this.ha?.locale?.time_format === "12"
+            ? true
+            : this.ha?.locale?.time_format === "24"
+                ? false
+                : undefined;
+        const locale = formatLocale(this.ha);
+        const time = (ms, withDay) => new Intl.DateTimeFormat(locale, withDay
+            ? { weekday: "short", day: "numeric" }
+            : { hour: "2-digit", minute: "2-digit", hour12 }).format(ms);
+        const span = (hours) => new Intl.NumberFormat(locale, {
+            style: "unit",
+            unit: hours < 48 ? "hour" : "day",
+            unitDisplay: "short",
+        }).format(hours < 48 ? hours : hours / 24);
+        const reading = (s, value) => value === undefined
+            ? "—"
+            : s.key === "valve"
+                ? formatPercent(this.ha, value)
+                : this.temperature(value, 1);
+        const series = this.series;
+        const window = this.window;
+        const at = this.hover;
+        return b `<dialog
+      id="history"
+      aria-labelledby="history-title"
+      @close=${() => {
+            this.historyTicket++;
+            this.hover = undefined;
+        }}
     >
-      <div class="row">
+      <div class="history-head">
+        <h2 id="history-title">${name}</h2>
         <button
-          class="symbol"
-          aria-label=${name}
-          @click=${() => this.info(this.config?.entity)}
+          class="close"
+          data-close
+          aria-label=${this.t("close")}
+          title=${this.t("close")}
+          @click=${() => this.closeHistory()}
         >
-          <ha-icon .icon=${icon}></ha-icon>
+          ×
         </button>
-        <button class="name" @click=${() => this.info(this.config?.entity)}>
-          <span class="title">${name}</span>
-          <span class="status" data-status>${this.statusLine(climate)}</span>
-        </button>
-        ${this.valveView(v)}${this.control(climate)}
       </div>
-      ${this.error ? b `<p class="error" role="alert">${this.error}</p>` : A}
-    </ha-card>`;
+      <div class="ranges" role="group" aria-label=${this.t("history")}>
+        ${RANGES.map((hours) => b `<button
+              data-range=${hours}
+              aria-pressed=${String(this.range === hours)}
+              ?disabled=${this.loading && this.range === hours}
+              @click=${() => void this.loadHistory(hours)}
+            >
+              ${span(hours)}
+            </button>`)}
+      </div>
+      <div
+        class="plot"
+        aria-busy=${String(this.loading)}
+        @pointermove=${(e) => {
+            const svg = e.currentTarget.querySelector("svg");
+            if (!svg || !window)
+                return;
+            this.hover = timeAt(e, svg, window[0], window[1]);
+            this.requestUpdate();
+        }}
+        @pointerleave=${() => {
+            this.hover = undefined;
+            this.requestUpdate();
+        }}
+      >
+        ${this.historyError
+            ? b `<p class="error" role="alert">${this.historyError}</p>`
+            : !series || !window
+                ? b `<p class="hint" role="status">${this.t("loading")}</p>`
+                : series.every((s) => s.points.every(([, v]) => v === undefined))
+                    ? b `<p class="hint">${this.t("noHistory")}</p>`
+                    : chart(series, window[0], window[1], at, {
+                        number: (v, d) => formatNumber(this.ha, v, d),
+                        percent: (v) => formatPercent(this.ha, v),
+                        time,
+                        label: `${this.t("history")}: ${name}`,
+                    }, Math.max(280, this.plotWidth))}
+      </div>
+      <p class="when" aria-live="polite">
+        ${at === undefined ? this.t("now") : time(at, false)}
+      </p>
+      <div class="legend">
+        ${(series ?? []).map((s) => b `<button
+              class=${`item s-${s.key}`}
+              data-series=${s.key}
+              @click=${() => {
+            this.closeHistory();
+            this.info(s.entityId);
+        }}
+            >
+              <span class="swatch"></span>
+              <span class="label">${this.t(s.key)}</span>
+              <strong
+                >${reading(s, at === undefined
+            ? s.points[s.points.length - 1]?.[1]
+            : valueAt(s, at))}</strong
+              >
+            </button>`)}
+      </div>
+    </dialog>`;
     }
     getCardSize() {
         return 1;

@@ -19,19 +19,23 @@ type: custom:thermostat-valve-card
 entity: climate.oppholdsrom
 icon: mdi:sofa
 appearance: bubble
+outdoor_entity: sensor.outdoor_temperature
+flow_entity: sensor.heat_pump_flow_temperature
 ```
 
 ## Configuration
 
-| Option         | Default                    | Meaning                                                                        |
-| -------------- | -------------------------- | ------------------------------------------------------------------------------ |
-| `entity`       | Required                   | The room's `climate` entity.                                                   |
-| `valve_entity` | Found automatically        | A `sensor`, `number` or `input_number` reporting the valve opening in percent. |
-| `show_valve`   | `true`                     | Set to `false` to hide the valve indicator.                                    |
-| `name`         | The entity's friendly name | Row title. Your name is shown as written.                                      |
-| `icon`         | The entity's icon          | Any `mdi:` icon, for example `mdi:sofa` or `mdi:bed`.                          |
-| `appearance`   | `default`                  | `default` or `bubble` (follows Bubble Card theme variables).                   |
-| `color_scheme` | `home-assistant`           | `home-assistant`, `bright`, `warm`, `mint`, `sky` or `lavender`.               |
+| Option           | Default                    | Meaning                                                                        |
+| ---------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| `entity`         | Required                   | The room's `climate` entity.                                                   |
+| `valve_entity`   | Found automatically        | A `sensor`, `number` or `input_number` reporting the valve opening in percent. |
+| `show_valve`     | `true`                     | Set to `false` to hide the valve indicator.                                    |
+| `outdoor_entity` | None                       | Outdoor temperature sensor, drawn in the history.                              |
+| `flow_entity`    | None                       | Flow (supply) temperature sensor, drawn in the history.                        |
+| `name`           | The entity's friendly name | Row title. Your name is shown as written.                                      |
+| `icon`           | The entity's icon          | Any `mdi:` icon, for example `mdi:sofa` or `mdi:bed`.                          |
+| `appearance`     | `default`                  | `default` or `bubble` (follows Bubble Card theme variables).                   |
+| `color_scheme`   | `home-assistant`           | `home-assistant`, `bright`, `warm`, `mint`, `sky` or `lavender`.               |
 
 The visual editor covers every option and suggests climate entities and percent sensors.
 
@@ -42,12 +46,23 @@ The visual editor covers every option and suggests climate entities and percent 
   1. the climate attributes `valve_position`, `valve_opening` or `pi_heating_demand`
   2. a percent `sensor` or `number` on the same device whose entity ID ends in `valve_opening`, `valve_position`, `valve`, `pi_heating_demand` or `heating_demand` (a valve reading is preferred over a heating-demand estimate)
 
-  With no valve source the ring is hidden. When the valve comes from its own entity, tapping it opens that entity.
+  With no valve source the ring is hidden.
 
 - **Target temperature.** − and + move the target by the thermostat's `target_temp_step`, within `min_temp` and `max_temp`. Presses are collected, and one `climate.set_temperature` call is sent 0.8 seconds after the last one. While it is on its way, the value is marked and the buttons pause, so no duplicate request is sent. If Home Assistant rejects it, the row shows why and goes back to the thermostat's own target.
-- Tapping the icon or name opens Home Assistant's dialog for the thermostat. Use it to change HVAC mode or presets.
+- Tapping the valve, the name or the temperature opens the room's **history** (below). Tapping the icon opens Home Assistant's dialog for the thermostat; use it to change HVAC mode or presets.
 
 Thermostats that use a low/high range (`heat_cool` with `target_temp_low` and `target_temp_high`) show the range read-only; use the more-info dialog to change it. When the thermostat is unavailable or Home Assistant is disconnected, the buttons are disabled.
+
+## History
+
+![History of valve opening, room, outdoor and flow temperature in one chart](docs/thermostat-valve-history.png)
+
+One chart for the room over the last 6 hours, 24 hours (the default) or 7 days:
+
+- the **valve opening** as a filled step area on the right-hand percent scale;
+- the **room** temperature (the thermostat's `current_temperature`), and the **outdoor** and **flow** temperature when `outdoor_entity` and `flow_entity` are set, as lines on the left-hand temperature scale.
+
+Move the pointer or a finger across the chart to read every value at that moment; otherwise the legend shows the current values. Tapping a legend entry opens that entity in Home Assistant. A spell where a sensor was unavailable is left as a gap. The data comes from Home Assistant's recorder, so an entity the recorder excludes has no history. The outdoor and flow sensors are set per card; use the same ones on every room card (0.2.0).
 
 ## Language and formats
 

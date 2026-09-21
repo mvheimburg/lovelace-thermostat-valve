@@ -224,6 +224,150 @@ export const styles = css`
       transition: none;
     }
   }
+  /* History: one chart of the valve (area) and the temperatures (lines). */
+  .s-valve {
+    --series: var(--tv-heat);
+  }
+  .s-room {
+    --series: var(--primary-text-color, #1b1b1a);
+  }
+  .s-outdoor {
+    --series: var(--tv-cool);
+  }
+  .s-flow {
+    --series: var(--purple-color, #926bc7);
+  }
+  dialog {
+    color: var(--primary-text-color, #1b1b1a);
+    background: var(--tv-surface);
+    border: 0;
+    border-radius: min(var(--tv-radius), 28px);
+    padding: 16px 16px 20px;
+    width: min(640px, calc(100vw - 24px));
+    max-height: 90dvh;
+    overflow: auto;
+    box-shadow: 0 16px 60px #0006;
+  }
+  dialog::backdrop {
+    background: #0007;
+  }
+  .history-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .history-head h2 {
+    flex: 1;
+    margin: 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .close {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 24px;
+    line-height: 1;
+    background: var(--tv-pill);
+  }
+  .ranges {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0 6px;
+  }
+  .ranges button {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 18px;
+    background: var(--tv-pill);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .ranges button[aria-pressed="true"] {
+    background: color-mix(
+      in srgb,
+      var(--primary-color, #03a9f4) 22%,
+      var(--tv-pill)
+    );
+  }
+  .plot {
+    min-height: 120px;
+    touch-action: pan-y;
+  }
+  .chart {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .chart .grid {
+    stroke: color-mix(in srgb, var(--tv-muted) 22%, transparent);
+    stroke-width: 1;
+  }
+  .chart .axis {
+    fill: var(--tv-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .chart .line {
+    fill: none;
+    stroke: var(--series);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  .chart .edge {
+    fill: none;
+    stroke: var(--series);
+    stroke-width: 1.5;
+  }
+  .chart .area {
+    fill: color-mix(in srgb, var(--series) 28%, transparent);
+    stroke: none;
+  }
+  .chart .cursor {
+    stroke: var(--tv-muted);
+    stroke-dasharray: 3 3;
+  }
+  .plot .hint {
+    margin: 40px 0;
+    text-align: center;
+    color: var(--tv-muted);
+  }
+  .when {
+    margin: 4px 4px 6px;
+    font-size: 12px;
+    color: var(--tv-muted);
+  }
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 6px;
+  }
+  .legend .item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 2px 8px;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 16px;
+    background: var(--tv-pill);
+    text-align: start;
+  }
+  .legend .swatch {
+    grid-row: span 2;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--series);
+  }
+  .legend .label {
+    font-size: 12px;
+    color: var(--tv-muted);
+  }
+  .legend strong {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
   .editor {
     display: grid;
     gap: 14px;

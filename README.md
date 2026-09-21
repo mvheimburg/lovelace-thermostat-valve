@@ -37,7 +37,7 @@ The visual editor covers every option and suggests climate entities and percent 
 
 ## What the row shows
 
-- **Heating or cooling.** The row and its icon turn warm while `hvac_action` is `heating` (also `preheating` and `defrosting`) and cool blue while it is `cooling`. They stay neutral while idle or off. The status line shows the action and the current room temperature, for example _Heating · 21.3 °C_. A thermostat that does not report `hvac_action` is shown by its mode instead (_Heat_, _Cool_). Colors follow Home Assistant's `--state-climate-heat-color` and `--state-climate-cool-color`.
+- **Heating or cooling.** The icon, status word and valve ring turn warm while `hvac_action` is `heating` (also `preheating` and `defrosting`) and cool blue while it is `cooling`; the row itself keeps your card background. They stay neutral while idle or off. The status line shows the action and the current room temperature, for example _Heating · 21.3 °C_. A thermostat that does not report `hvac_action` is shown by its mode instead (_Heat_, _Cool_). Colors follow Home Assistant's `--state-climate-heat-color` and `--state-climate-cool-color`.
 - **Valve opening.** A small ring and percentage. Without `valve_entity`, the card uses the first match from:
   1. the climate attributes `valve_position`, `valve_opening` or `pi_heating_demand`
   2. a percent `sensor` or `number` on the same device whose entity ID ends in `valve_opening`, `valve_position`, `valve`, `pi_heating_demand` or `heating_demand` (a valve reading is preferred over a heating-demand estimate)

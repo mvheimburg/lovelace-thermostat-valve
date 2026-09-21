@@ -453,8 +453,8 @@ function modeLabel(hass, mode) {
 }
 
 /**
- * A single row in the family of our Bubble-style cards: a tinted status
- * circle, the name with a status line, a valve ring and a stepper pill.
+ * A single row in the family of our Bubble-style cards: a status circle
+ * tinted by heating/cooling (the row itself stays neutral), the name with a status line, a valve ring and a stepper pill.
  * Colours come from HA theme and climate state variables.
  */
 const styles = i$4 `
@@ -506,10 +506,6 @@ const styles = i$4 `
   .tone-cooling {
     --tone: var(--tv-cool);
   }
-  .tone-heating,
-  .tone-cooling {
-    background: color-mix(in srgb, var(--tone) 14%, var(--tv-surface));
-  }
   .tone-unavailable {
     --tone: var(--tv-error);
   }
@@ -544,7 +540,7 @@ const styles = i$4 `
     place-items: center;
     border-radius: var(--tv-circle);
     color: var(--tone);
-    background: color-mix(in srgb, var(--tone) 18%, var(--tv-pill));
+    background: color-mix(in srgb, var(--tone) 14%, var(--tv-pill));
   }
   .tone-idle .symbol,
   .tone-off .symbol {
@@ -622,13 +618,8 @@ const styles = i$4 `
     align-items: center;
     margin-inline-start: auto;
     border-radius: 22px;
-    background: var(--tv-surface);
-    min-height: 44px;
-  }
-  .tone-idle .stepper,
-  .tone-off .stepper,
-  .tone-unavailable .stepper {
     background: var(--tv-pill);
+    min-height: 44px;
   }
   .stepper button {
     width: 44px;

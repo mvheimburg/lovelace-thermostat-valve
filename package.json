@@ -1,6 +1,6 @@
 {
   "name": "lovelace-thermostat-valve",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Compact Lovelace thermostat card with valve and heating/cooling indicators",
   "type": "module",
   "scripts": {

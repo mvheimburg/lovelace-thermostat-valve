@@ -89,10 +89,12 @@ export class ThermostatValveCard extends LitElement {
     if (!plot || this.resize) return;
     this.resize = new ResizeObserver(([entry]) => {
       const width = Math.round(entry.contentRect.width);
-      if (width > 0 && Math.abs(width - this.plotWidth) > 4) {
-        this.plotWidth = width;
-        this.requestUpdate();
-      }
+      // Redraw next frame, outside the observer's own layout pass.
+      if (width > 0 && Math.abs(width - this.plotWidth) > 4)
+        requestAnimationFrame(() => {
+          this.plotWidth = width;
+          this.requestUpdate();
+        });
     });
     this.resize.observe(plot);
   }

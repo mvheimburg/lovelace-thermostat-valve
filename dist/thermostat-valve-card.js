@@ -945,8 +945,12 @@ function ticks(min, max, count = 4) {
     const step = [1, 2, 2.5, 5, 10].map((m) => m * power).find((s) => s >= raw) ??
         10 * power;
     const out = [];
-    for (let v = Math.floor(min / step) * step; v <= max + step / 2; v += step)
+    // From the step at or below min up to the first step at or above max.
+    for (let v = Math.floor(min / step) * step;; v += step) {
         out.push(Number(v.toFixed(6)));
+        if (v >= max - 1e-9)
+            break;
+    }
     return out;
 }
 
@@ -1220,10 +1224,12 @@ class ThermostatValveCard extends i$1 {
             return;
         this.resize = new ResizeObserver(([entry]) => {
             const width = Math.round(entry.contentRect.width);
-            if (width > 0 && Math.abs(width - this.plotWidth) > 4) {
-                this.plotWidth = width;
-                this.requestUpdate();
-            }
+            // Redraw next frame, outside the observer's own layout pass.
+            if (width > 0 && Math.abs(width - this.plotWidth) > 4)
+                requestAnimationFrame(() => {
+                    this.plotWidth = width;
+                    this.requestUpdate();
+                });
         });
         this.resize.observe(plot);
     }

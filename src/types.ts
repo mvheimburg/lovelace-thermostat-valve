@@ -38,3 +38,25 @@ export interface CardConfig {
   appearance?: "default" | "bubble";
   color_scheme?: ColorScheme;
 }
+export interface GroupThermostat {
+  entity: string;
+  name?: string;
+  icon?: string;
+  valve_entity?: string;
+}
+export interface GroupSection {
+  name?: string;
+  icon?: string;
+  thermostats: GroupThermostat[];
+}
+export interface GroupConfig {
+  type: "custom:thermostat-group-card";
+  title?: string;
+  icon?: string;
+  appearance?: "default" | "bubble";
+  color_scheme?: ColorScheme;
+  show_valve?: boolean;
+  outdoor_entity?: string;
+  flow_entity?: string;
+  sections: GroupSection[];
+}

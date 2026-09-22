@@ -48,6 +48,14 @@ export const styles = css`
     border: var(--bubble-border, none);
     box-shadow: var(--bubble-box-shadow, var(--ha-card-box-shadow));
   }
+  /* A room inside the thermostat group card: a tile on the group's surface. */
+  :host([embedded]) ha-card {
+    background: color-mix(in srgb, var(--tv-pill) 45%, var(--tv-surface));
+    border: none;
+    border-radius: min(var(--tv-radius), 24px);
+    box-shadow: none;
+    --ha-card-border-width: 0;
+  }
   .tone-heating {
     --tone: var(--tv-heat);
   }

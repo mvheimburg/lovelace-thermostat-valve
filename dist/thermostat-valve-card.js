@@ -412,6 +412,36 @@ const en = {
     flow: "Flow",
     outdoor_entity: "Outdoor temperature (for history)",
     flow_entity: "Flow temperature (for history)",
+    groupTitle: "Thermostats",
+    configure: "Configure",
+    configureHelp: "Rooms, names, icons and the outdoor and flow sensors belong to this card: edit the dashboard, then edit the card. Tap a room's icon to change its mode or preset in Home Assistant.",
+    setup: "Edit the dashboard and add rooms to this card.",
+    summaryHeating: "{n} heating",
+    summaryCooling: "{n} cooling",
+    summaryUnavailable: "{n} unavailable",
+    allIdle: "Not heating",
+    title: "Title",
+    sections: "Room groups",
+    sectionName: "Group heading (optional)",
+    addSection: "Add room group",
+    addThermostat: "Add room",
+    thermostatN: "Room {n}",
+    sectionN: "Room group {n}",
+    moveUp: "Move up",
+    moveDown: "Move down",
+    remove: "Remove",
+    draftInvalid: "Your latest edits are not saved yet. Choose a climate entity for every room, or remove the empty row.",
+    invalidConfig: "The card configuration must be an object.",
+    invalidType: "Expected type: custom:thermostat-group-card.",
+    invalidAppearance: "appearance must be default or bubble.",
+    invalidScheme: "Choose a valid color_scheme: home-assistant, bright, warm, mint, sky or lavender.",
+    invalidSections: "sections must be a list of room groups.",
+    invalidSection: "Each room group needs a list of thermostats.",
+    invalidThermostat: "Each room needs a climate entity.",
+    invalidValveEntity: "valve_entity must be a sensor or number entity.",
+    invalidSensor: "outdoor_entity and flow_entity must be sensor entities.",
+    invalidText: "Titles, names and icons must be text.",
+    invalidShowValve: "show_valve must be true or false.",
 };
 const nb = {
     heating: "Varmer",
@@ -456,6 +486,36 @@ const nb = {
     flow: "Tur",
     outdoor_entity: "Utetemperatur (for historikk)",
     flow_entity: "Turtemperatur (for historikk)",
+    groupTitle: "Termostater",
+    configure: "Konfigurer",
+    configureHelp: "Rom, navn, ikoner og ute- og turtemperatur hører til dette kortet: rediger dashbordet, og rediger så kortet. Trykk på ikonet til et rom for å endre modus eller forhåndsvalg i Home Assistant.",
+    setup: "Rediger dashbordet og legg til rom i dette kortet.",
+    summaryHeating: "{n} varmer",
+    summaryCooling: "{n} kjøler",
+    summaryUnavailable: "{n} utilgjengelig",
+    allIdle: "Varmer ikke",
+    title: "Tittel",
+    sections: "Romgrupper",
+    sectionName: "Gruppeoverskrift (valgfri)",
+    addSection: "Legg til romgruppe",
+    addThermostat: "Legg til rom",
+    thermostatN: "Rom {n}",
+    sectionN: "Romgruppe {n}",
+    moveUp: "Flytt opp",
+    moveDown: "Flytt ned",
+    remove: "Fjern",
+    draftInvalid: "De siste endringene er ikke lagret ennå. Velg en klimaenhet for hvert rom, eller fjern den tomme raden.",
+    invalidConfig: "Kortoppsettet må være et objekt.",
+    invalidType: "Forventet type: custom:thermostat-group-card.",
+    invalidAppearance: "appearance må være default eller bubble.",
+    invalidScheme: "Velg en gyldig color_scheme: home-assistant, bright, warm, mint, sky eller lavender.",
+    invalidSections: "sections må være en liste med romgrupper.",
+    invalidSection: "Hver romgruppe trenger en liste med termostater.",
+    invalidThermostat: "Hvert rom trenger en klimaenhet.",
+    invalidValveEntity: "valve_entity må være en sensor- eller tallenhet.",
+    invalidSensor: "outdoor_entity og flow_entity må være sensorenheter.",
+    invalidText: "Titler, navn og ikoner må være tekst.",
+    invalidShowValve: "show_valve må være true eller false.",
 };
 function localize(hass, key) {
     return (language(hass) === "nb" ? nb : en)[key];
@@ -526,6 +586,14 @@ const styles = i$4 `
   :host([appearance="bubble"]) ha-card {
     border: var(--bubble-border, none);
     box-shadow: var(--bubble-box-shadow, var(--ha-card-box-shadow));
+  }
+  /* A room inside the thermostat group card: a tile on the group's surface. */
+  :host([embedded]) ha-card {
+    background: color-mix(in srgb, var(--tv-pill) 45%, var(--tv-surface));
+    border: none;
+    border-radius: min(var(--tv-radius), 24px);
+    box-shadow: none;
+    --ha-card-border-width: 0;
   }
   .tone-heating {
     --tone: var(--tv-heat);
@@ -1645,7 +1713,8 @@ class ThermostatValveCard extends i$1 {
         return 1;
     }
     getGridOptions() {
-        return { columns: 12, rows: 1, min_columns: 6, min_rows: 1 };
+        // Auto height: on a narrow column the stepper wraps below the name.
+        return { columns: 12, rows: "auto", min_columns: 6, min_rows: 1 };
     }
     static getConfigElement() {
         return document.createElement("thermostat-valve-card-editor");
@@ -1659,15 +1728,624 @@ ThermostatValveCard.styles = styles;
 if (!customElements.get("thermostat-valve-card"))
     customElements.define("thermostat-valve-card", ThermostatValveCard);
 // Card-picker metadata has no hass context and stays English.
-const catalog = window;
-catalog.customCards ?? (catalog.customCards = []);
-if (!catalog.customCards.some((c) => c.type === "thermostat-valve-card"))
-    catalog.customCards.push({
+const catalog$1 = window;
+catalog$1.customCards ?? (catalog$1.customCards = []);
+if (!catalog$1.customCards.some((c) => c.type === "thermostat-valve-card"))
+    catalog$1.customCards.push({
         type: "thermostat-valve-card",
         name: "Thermostat Valve Card",
         description: "Compact thermostat row: target temperature, valve opening and heating/cooling state",
         preview: true,
     });
 
-export { COMMIT_DELAY, ThermostatValveCard };
+const GROUP_TYPE = "custom:thermostat-group-card";
+class GroupConfigError extends Error {
+    constructor(code) {
+        super(code);
+        this.code = code;
+    }
+}
+function object(input) {
+    if (!input || typeof input !== "object" || Array.isArray(input))
+        throw new GroupConfigError("invalidConfig");
+    return input;
+}
+function text(input, key) {
+    if (input[key] !== undefined && typeof input[key] !== "string")
+        throw new GroupConfigError("invalidText");
+}
+function entity(input, key, pattern, code) {
+    const value = input[key];
+    if (value !== undefined &&
+        (typeof value !== "string" || !pattern.test(value)))
+        throw new GroupConfigError(code);
+}
+const sensor = /^(sensor|number|input_number)\.\w+$/;
+function normalizeGroupConfig(input) {
+    const c = object(input);
+    if (c.type !== GROUP_TYPE)
+        throw new GroupConfigError("invalidType");
+    text(c, "title");
+    text(c, "icon");
+    if (c.appearance !== undefined &&
+        !["default", "bubble"].includes(String(c.appearance)))
+        throw new GroupConfigError("invalidAppearance");
+    if (c.color_scheme !== undefined &&
+        !colorSchemes.includes(c.color_scheme))
+        throw new GroupConfigError("invalidScheme");
+    if (c.show_valve !== undefined && typeof c.show_valve !== "boolean")
+        throw new GroupConfigError("invalidShowValve");
+    entity(c, "outdoor_entity", sensor, "invalidSensor");
+    entity(c, "flow_entity", sensor, "invalidSensor");
+    const sections = c.sections ?? [];
+    if (!Array.isArray(sections))
+        throw new GroupConfigError("invalidSections");
+    return {
+        ...c,
+        type: GROUP_TYPE,
+        sections: sections.map((value) => {
+            const s = object(value);
+            if (!Array.isArray(s.thermostats))
+                throw new GroupConfigError("invalidSection");
+            text(s, "name");
+            text(s, "icon");
+            return {
+                ...s,
+                thermostats: s.thermostats.map((value) => {
+                    const t = object(value);
+                    if (typeof t.entity !== "string" || !/^climate\.\w+$/.test(t.entity))
+                        throw new GroupConfigError("invalidThermostat");
+                    text(t, "name");
+                    text(t, "icon");
+                    entity(t, "valve_entity", sensor, "invalidValveEntity");
+                    return { ...t, entity: t.entity };
+                }),
+            };
+        }),
+    };
+}
+
+/**
+ * Edits a draft of the group configuration. Only a valid draft is sent to the
+ * dashboard; a new room stays here until its climate entity is chosen.
+ */
+class ThermostatGroupEditor extends i$1 {
+    constructor() {
+        super(...arguments);
+        this.config = { type: GROUP_TYPE, sections: [] };
+    }
+    setConfig(config) {
+        this.config = structuredClone({
+            ...config,
+            sections: config.sections ?? [],
+        });
+        this.invalid = undefined;
+        this.requestUpdate();
+    }
+    t(key) {
+        return localize(this.hass, key);
+    }
+    /** Keep the draft; send it only when it is a configuration the card accepts. */
+    emit(next) {
+        this.config = next;
+        try {
+            const config = normalizeGroupConfig(next);
+            this.invalid = undefined;
+            this.dispatchEvent(new CustomEvent("config-changed", {
+                detail: { config },
+                bubbles: true,
+                composed: true,
+            }));
+        }
+        catch (error) {
+            if (!(error instanceof GroupConfigError))
+                throw error;
+            this.invalid = error.code;
+        }
+        this.requestUpdate();
+    }
+    set(key, value) {
+        const next = { ...this.config, [key]: value };
+        if (value === "" || value === undefined)
+            delete next[key];
+        this.emit(next);
+    }
+    sections(update) {
+        const sections = structuredClone(this.config.sections);
+        update(sections);
+        this.emit({ ...this.config, sections });
+    }
+    setSection(si, key, value) {
+        this.sections((s) => {
+            if (value)
+                s[si][key] = value;
+            else
+                delete s[si][key];
+        });
+    }
+    setRoom(si, ti, key, value) {
+        this.sections((s) => {
+            const room = s[si].thermostats[ti];
+            if (value || key === "entity")
+                room[key] = value;
+            else
+                delete room[key];
+        });
+    }
+    move(list, from, to) {
+        if (to < 0 || to >= list.length)
+            return;
+        const [item] = list.splice(from, 1);
+        list.splice(to, 0, item);
+    }
+    input(label, value, change, options = {}) {
+        return b `<label
+      >${label}<input
+        list=${options.list ? options.id : ""}
+        placeholder=${options.placeholder ?? ""}
+        .value=${l(value ?? "")}
+        @change=${(e) => change(e.target.value.trim())}
+      />${options.list
+            ? b `<datalist id=${options.id}>
+              ${options.list.map((id) => b `<option value=${id}></option>`)}
+            </datalist>`
+            : A}</label
+    >`;
+    }
+    groupText(key, list, placeholder = "") {
+        return this.input(this.t(key), this.config[key], (value) => this.set(key, value), { list, id: `${key}-options`, placeholder });
+    }
+    orderButtons(count, index, move, remove, label) {
+        return b `<button
+        data-action="up"
+        aria-label=${`${this.t("moveUp")}: ${label}`}
+        title=${this.t("moveUp")}
+        ?disabled=${index === 0}
+        @click=${() => move(index - 1)}
+      >
+        ↑</button
+      ><button
+        data-action="down"
+        aria-label=${`${this.t("moveDown")}: ${label}`}
+        title=${this.t("moveDown")}
+        ?disabled=${index === count - 1}
+        @click=${() => move(index + 1)}
+      >
+        ↓</button
+      ><button
+        data-action="remove"
+        aria-label=${`${this.t("remove")}: ${label}`}
+        @click=${remove}
+      >
+        ${this.t("remove")}
+      </button>`;
+    }
+    room(si, ti, room, count, lists) {
+        const label = room.name ||
+            room.entity ||
+            this.t("thermostatN").replace("{n}", String(ti + 1));
+        return b `<div class="room" data-room=${`${si}.${ti}`}>
+      <div class="bar">
+        <strong>${label}</strong>
+        ${this.orderButtons(count, ti, (to) => this.sections((s) => this.move(s[si].thermostats, ti, to)), () => this.sections((s) => s[si].thermostats.splice(ti, 1)), label)}
+      </div>
+      ${this.input(this.t("entity"), room.entity, (v) => this.setRoom(si, ti, "entity", v), {
+            list: lists.climates,
+            id: `climates-${si}-${ti}`,
+            placeholder: "climate.…",
+        })}
+      ${this.input(this.t("name"), room.name, (v) => this.setRoom(si, ti, "name", v))}
+      ${this.input(this.t("icon"), room.icon, (v) => this.setRoom(si, ti, "icon", v), { placeholder: "mdi:sofa" })}
+      ${this.input(this.t("valve_entity"), room.valve_entity, (v) => this.setRoom(si, ti, "valve_entity", v), {
+            list: lists.valves,
+            id: `valves-${si}-${ti}`,
+            placeholder: "sensor.…",
+        })}
+    </div>`;
+    }
+    render() {
+        const states = this.hass?.states ?? {};
+        const ids = Object.keys(states);
+        const climates = ids.filter((id) => id.startsWith("climate."));
+        const valves = ids.filter((id) => /^(sensor|number|input_number)\./.test(id) &&
+            states[id].attributes.unit_of_measurement === "%");
+        const temperatures = ids.filter((id) => /^(sensor|number|input_number)\./.test(id) &&
+            (states[id].attributes.device_class === "temperature" ||
+                ["°C", "°F"].includes(String(states[id].attributes.unit_of_measurement))));
+        const appearance = this.config.appearance ?? "default";
+        const sections = this.config.sections;
+        return b `<div class="editor">
+      ${this.invalid
+            ? b `<p class="warning" role="alert" data-warning>
+              ${this.invalid === "invalidThermostat"
+                ? this.t("draftInvalid")
+                : `${this.t("draftInvalid")} ${this.t(this.invalid)}`}
+            </p>`
+            : A}
+      ${this.groupText("title", undefined, this.t("groupTitle"))}
+      ${this.groupText("icon", undefined, "mdi:home-thermometer-outline")}
+      <label
+        >${this.t("appearance")}<select
+          data-config="appearance"
+          .value=${l(appearance)}
+          @change=${(e) => this.set("appearance", e.target.value)}
+        >
+          ${["default", "bubble"].map((v) => b `<option value=${v} ?selected=${v === appearance}>
+                ${this.t(v)}
+              </option>`)}
+        </select></label
+      >
+      ${colorSchemeSelector(this.hass, this.config.color_scheme, (scheme) => this.set("color_scheme", scheme))}
+      <label class="toggle"
+        ><input
+          data-config="show_valve"
+          type="checkbox"
+          .checked=${l(this.config.show_valve !== false)}
+          @change=${(e) => this.set("show_valve", e.target.checked)}
+        />${this.t("show_valve")}</label
+      >
+      ${this.groupText("outdoor_entity", temperatures, "sensor.…")}
+      ${this.groupText("flow_entity", temperatures, "sensor.…")}
+      ${sections.map((section, si) => {
+            const label = section.name || this.t("sectionN").replace("{n}", String(si + 1));
+            return b `<fieldset data-section=${si}>
+          <legend>${label}</legend>
+          <div class="bar">
+            <strong></strong>
+            ${this.orderButtons(sections.length, si, (to) => this.sections((s) => this.move(s, si, to)), () => this.sections((s) => s.splice(si, 1)), label)}
+          </div>
+          ${this.input(this.t("sectionName"), section.name, (v) => this.setSection(si, "name", v))}
+          ${this.input(this.t("icon"), section.icon, (v) => this.setSection(si, "icon", v), { placeholder: "mdi:home-floor-1" })}
+          ${section.thermostats.map((room, ti) => this.room(si, ti, room, section.thermostats.length, {
+                climates,
+                valves,
+            }))}
+          <button
+            class="add"
+            data-action="add-thermostat"
+            @click=${() => this.sections((s) => s[si].thermostats.push({ entity: "" }))}
+          >
+            + ${this.t("addThermostat")}
+          </button>
+        </fieldset>`;
+        })}
+      <button
+        class="add"
+        data-action="add-section"
+        @click=${() => this.sections((s) => s.push({ thermostats: [{ entity: "" }] }))}
+      >
+        + ${this.t("addSection")}
+      </button>
+    </div>`;
+    }
+}
+ThermostatGroupEditor.styles = [
+    styles,
+    i$4 `
+      fieldset {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 12px;
+        border: 1px solid var(--divider-color, #ccc);
+        border-radius: 12px;
+      }
+      legend {
+        padding: 0 6px;
+        font-weight: 600;
+      }
+      .room {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 10px;
+        background: var(--tv-pill);
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .bar strong {
+        flex: 1;
+        font-size: 13px;
+      }
+      .bar button,
+      .add {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0 12px;
+        border-radius: 22px;
+        border: 1px solid var(--divider-color, #ccc);
+        background: var(--card-background-color, #fff);
+      }
+      .add {
+        justify-self: start;
+      }
+      .warning {
+        margin: 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: var(--tv-error);
+        background: color-mix(in srgb, var(--tv-error) 10%, transparent);
+      }
+    `,
+];
+ThermostatGroupEditor.properties = { hass: { attribute: false } };
+if (!customElements.get("thermostat-group-card-editor"))
+    customElements.define("thermostat-group-card-editor", ThermostatGroupEditor);
+
+/**
+ * Several rooms in one card, optionally under group headings. Each room is a
+ * thermostat-valve-card drawn as a tile, so every room keeps the single
+ * card's stepper, pending/failure handling and history.
+ */
+class ThermostatGroupCard extends i$1 {
+    constructor() {
+        super(...arguments);
+        this.config = { type: GROUP_TYPE, sections: [] };
+        /** One embedded room card per position, reused across renders. */
+        this.rows = new Map();
+        this.t = (key) => localize(this.ha, key);
+    }
+    get hass() {
+        return this.ha;
+    }
+    set hass(value) {
+        this.ha = value;
+        this.requestUpdate();
+    }
+    setConfig(input) {
+        this.configError = undefined;
+        try {
+            this.config = normalizeGroupConfig(input);
+        }
+        catch (error) {
+            if (!(error instanceof GroupConfigError))
+                throw error;
+            this.config = { type: GROUP_TYPE, sections: [] };
+            this.configError = error.code;
+        }
+        applyColorScheme(this, this.config.color_scheme);
+        this.setAttribute("appearance", this.config.appearance ?? "default");
+        this.requestUpdate();
+    }
+    /** The single-room configuration for one entry, with the group's shared settings. */
+    roomConfig(t) {
+        const c = this.config;
+        const room = {
+            type: TYPE,
+            entity: t.entity,
+            appearance: c.appearance ?? "default",
+            show_valve: c.show_valve !== false,
+        };
+        if (t.name?.trim())
+            room.name = t.name;
+        if (t.icon?.trim())
+            room.icon = t.icon;
+        if (t.valve_entity)
+            room.valve_entity = t.valve_entity;
+        if (c.outdoor_entity)
+            room.outdoor_entity = c.outdoor_entity;
+        if (c.flow_entity)
+            room.flow_entity = c.flow_entity;
+        return room;
+    }
+    row(key, t) {
+        const config = this.roomConfig(t);
+        const json = JSON.stringify(config);
+        let row = this.rows.get(key);
+        if (!row) {
+            const card = document.createElement("thermostat-valve-card");
+            card.setAttribute("embedded", "");
+            row = { card, json: "" };
+            this.rows.set(key, row);
+        }
+        if (row.json !== json) {
+            row.card.setConfig(config);
+            row.json = json;
+        }
+        row.card.hass = this.ha;
+        return row.card;
+    }
+    /** What needs attention: how many rooms heat, cool or are unavailable. */
+    summary() {
+        const ids = new Set(this.config.sections.flatMap((s) => s.thermostats.map((t) => t.entity)));
+        const counts = { heating: 0, cooling: 0, unavailable: 0 };
+        for (const id of ids) {
+            const kind = tone(this.ha?.states[id]);
+            if (kind in counts)
+                counts[kind]++;
+        }
+        const parts = [
+            ["heating", "summaryHeating"],
+            ["cooling", "summaryCooling"],
+            ["unavailable", "summaryUnavailable"],
+        ]
+            .filter(([kind]) => counts[kind])
+            .map(([kind, key]) => this.t(key).replace("{n}", formatNumber(this.ha, counts[kind], 0)));
+        return parts.length ? parts.join(" · ") : this.t("allIdle");
+    }
+    get dialog() {
+        return this.shadowRoot?.querySelector("#configure");
+    }
+    render() {
+        if (!this.ha)
+            return A;
+        const used = new Set();
+        const rooms = this.config.sections.map((s, si) => s.thermostats.map((t, ti) => {
+            const key = `${si}.${ti}`;
+            used.add(key);
+            return this.row(key, t);
+        }));
+        for (const key of [...this.rows.keys()])
+            if (!used.has(key))
+                this.rows.delete(key);
+        const empty = !used.size;
+        return b `<ha-card class="group">
+      <header>
+        <ha-icon
+          .icon=${this.config.icon || "mdi:home-thermometer-outline"}
+        ></ha-icon>
+        <div class="heading">
+          <h2>${this.config.title || this.t("groupTitle")}</h2>
+          ${empty || this.configError
+            ? A
+            : b `<span class="summary" data-summary
+                  >${this.summary()}</span
+                >`}
+        </div>
+        <button
+          class="round"
+          data-action="configure"
+          aria-label=${this.t("configure")}
+          title=${this.t("configure")}
+          @click=${() => this.dialog?.showModal()}
+        >
+          <ha-icon .icon=${"mdi:cog-outline"}></ha-icon>
+        </button>
+      </header>
+      ${this.configError
+            ? b `<p class="error" role="alert">${this.t(this.configError)}</p>`
+            : empty
+                ? b `<p class="hint">${this.t("setup")}</p>`
+                : this.config.sections.map((s, si) => b `<section>
+                    ${s.name?.trim() || s.icon
+                    ? b `<h3>
+                            ${s.icon
+                        ? b `<ha-icon .icon=${s.icon}></ha-icon>`
+                        : A}${s.name ?? ""}
+                          </h3>`
+                    : A}
+                    <div class="rooms">${rooms[si]}</div>
+                  </section>`)}
+      <dialog id="configure" aria-labelledby="configure-title">
+        <div class="history-head">
+          <h2 id="configure-title">${this.t("configure")}</h2>
+          <button
+            class="close"
+            data-close
+            aria-label=${this.t("close")}
+            title=${this.t("close")}
+            @click=${() => this.dialog?.close()}
+          >
+            ×
+          </button>
+        </div>
+        <p>${this.t("configureHelp")}</p>
+      </dialog>
+    </ha-card>`;
+    }
+    getCardSize() {
+        return (1 +
+            this.config.sections.reduce((n, s) => n + (s.name ? 1 : 0) + s.thermostats.length, 0));
+    }
+    getGridOptions() {
+        return { columns: 12, rows: "auto", min_columns: 6 };
+    }
+    static getConfigElement() {
+        return document.createElement("thermostat-group-card-editor");
+    }
+    static getStubConfig(hass) {
+        const climates = Object.keys(hass?.states ?? {})
+            .filter((id) => id.startsWith("climate."))
+            .slice(0, 4);
+        return {
+            type: GROUP_TYPE,
+            sections: climates.length
+                ? [{ thermostats: climates.map((entity) => ({ entity })) }]
+                : [],
+        };
+    }
+}
+ThermostatGroupCard.styles = [
+    styles,
+    i$4 `
+      ha-card.group {
+        padding: 12px;
+        display: grid;
+        gap: 12px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+      }
+      header > ha-icon {
+        color: var(--tv-muted);
+        flex: none;
+      }
+      .heading {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .summary {
+        font-size: 12px;
+        color: var(--tv-muted);
+      }
+      .round {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--tv-pill);
+        color: var(--primary-text-color, #1b1b1a);
+      }
+      section {
+        display: grid;
+        gap: 6px;
+      }
+      h3 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 4px 2px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      h3 ha-icon {
+        --mdc-icon-size: 20px;
+        color: var(--tv-muted);
+      }
+      .rooms {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+        gap: 6px;
+      }
+      .hint {
+        margin: 0 4px;
+        color: var(--tv-muted);
+      }
+      dialog p {
+        margin: 12px 4px 0;
+        line-height: 1.45;
+      }
+    `,
+];
+if (!customElements.get("thermostat-group-card"))
+    customElements.define("thermostat-group-card", ThermostatGroupCard);
+// Card-picker metadata has no hass context and stays English.
+const catalog = window;
+catalog.customCards ?? (catalog.customCards = []);
+if (!catalog.customCards.some((c) => c.type === "thermostat-group-card"))
+    catalog.customCards.push({
+        type: "thermostat-group-card",
+        name: "Thermostat Group Card",
+        description: "Several rooms' thermostats in one card, with valve opening, heating/cooling state and target temperature",
+        preview: true,
+    });
 //# sourceMappingURL=thermostat-valve-card.js.map

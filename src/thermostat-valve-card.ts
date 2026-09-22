@@ -526,7 +526,8 @@ export class ThermostatValveCard extends LitElement {
     return 1;
   }
   getGridOptions() {
-    return { columns: 12, rows: 1, min_columns: 6, min_rows: 1 };
+    // Auto height: on a narrow column the stepper wraps below the name.
+    return { columns: 12, rows: "auto", min_columns: 6, min_rows: 1 };
   }
   static getConfigElement(): HTMLElement {
     return document.createElement("thermostat-valve-card-editor");

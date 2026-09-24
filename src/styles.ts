@@ -10,6 +10,13 @@ export const styles = css`
     display: block;
     color: var(--primary-text-color, #1b1b1a);
     font-family: var(--paper-font-body1_-_font-family, system-ui, sans-serif);
+    --history-surface: var(--tv-surface);
+    --history-pill: var(--tv-pill);
+    --history-muted: var(--tv-muted);
+    --history-series-0: var(--tv-heat);
+    --history-series-1: var(--primary-text-color, #1b1b1a);
+    --history-series-2: var(--tv-cool);
+    --history-series-3: var(--purple-color, #926bc7);
     --tv-muted: var(--secondary-text-color, #5b5a55);
     --tv-surface: var(--ha-card-background, var(--card-background-color, #fff));
     --tv-pill: var(--secondary-background-color, #f3f2ee);
@@ -277,104 +284,6 @@ export const styles = css`
     font-size: 24px;
     line-height: 1;
     background: var(--tv-pill);
-  }
-  .ranges {
-    display: flex;
-    gap: 6px;
-    margin: 10px 0 6px;
-  }
-  .ranges button {
-    min-height: 36px;
-    padding: 0 14px;
-    border-radius: 18px;
-    background: var(--tv-pill);
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .ranges button[aria-pressed="true"] {
-    background: color-mix(
-      in srgb,
-      var(--primary-color, #03a9f4) 22%,
-      var(--tv-pill)
-    );
-  }
-  .plot {
-    min-height: 120px;
-    touch-action: pan-y;
-  }
-  .chart {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-  .chart .grid {
-    stroke: color-mix(in srgb, var(--tv-muted) 22%, transparent);
-    stroke-width: 1;
-  }
-  .chart .axis {
-    fill: var(--tv-muted);
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-  }
-  .chart .line {
-    fill: none;
-    stroke: var(--series);
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-  .chart .edge {
-    fill: none;
-    stroke: var(--series);
-    stroke-width: 1.5;
-  }
-  .chart .area {
-    fill: color-mix(in srgb, var(--series) 28%, transparent);
-    stroke: none;
-  }
-  .chart .cursor {
-    stroke: var(--tv-muted);
-    stroke-dasharray: 3 3;
-  }
-  .plot .hint {
-    margin: 40px 0;
-    text-align: center;
-    color: var(--tv-muted);
-  }
-  .when {
-    margin: 4px 4px 6px;
-    font-size: 12px;
-    color: var(--tv-muted);
-  }
-  .legend {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-    gap: 6px;
-  }
-  .legend .item {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-    gap: 2px 8px;
-    min-height: 44px;
-    padding: 8px 12px;
-    border-radius: 16px;
-    background: var(--tv-pill);
-    text-align: start;
-  }
-  .legend .swatch {
-    grid-row: span 2;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--series);
-  }
-  .legend .label {
-    font-size: 12px;
-    color: var(--tv-muted);
-  }
-  .legend strong {
-    font-size: 15px;
-    font-variant-numeric: tabular-nums;
   }
   .editor {
     display: grid;

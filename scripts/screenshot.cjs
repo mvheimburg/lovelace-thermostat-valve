@@ -42,7 +42,7 @@ const { spawn } = require("node:child_process");
 
     await page.setViewportSize({ width: 760, height: 620 });
     await page.locator("thermostat-group-card thermostat-valve-card").first().locator("[data-name]").click();
-    await page.locator("thermostat-group-card thermostat-valve-card").first().locator(".chart").waitFor();
+    await page.locator("thermostat-group-card thermostat-valve-card").first().locator(".history-chart").waitFor();
     await settle();
     await page.screenshot({ path: "docs/thermostat-valve-history.png" });
     await page.keyboard.press("Escape");

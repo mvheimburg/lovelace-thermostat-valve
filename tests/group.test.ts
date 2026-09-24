@@ -156,7 +156,7 @@ it("shares the outdoor sensor with every room's history", async () => {
   await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
   expect(JSON.stringify(calls)).toContain("sensor.outdoor");
   expect(JSON.stringify(calls)).toContain("climate.loft");
-  inRoom(loft, "[data-close]").click();
+  inRoom(loft, "[data-close-history]").click();
 });
 
 it("disables the rooms' buttons while Home Assistant is disconnected", async () => {

@@ -15,7 +15,6 @@ import {
 } from "./model";
 import {
   actionLabel,
-  formatLocale,
   formatNumber,
   formatPercent,
   localize,
@@ -23,15 +22,11 @@ import {
   type TextKey,
 } from "./localize";
 import { styles } from "./styles";
-import { chart, timeAt } from "./chart";
 import {
-  RANGES,
-  loadHistory,
-  valueAt,
-  type Range,
-  type Series,
-  type Source,
-} from "./history";
+  HistoryController, historyConnection, loadSeries, historyDialog, openHistoryDialog,
+  historyFormat, historyStrings, historyStyles, lineChart, lineChartTimeAt, valueAt,
+  type Series, type Source,
+} from "lovelace-card-history";
 import "./editor";
 
 /** Quiet time after the last +/- press before the target is sent. */
@@ -40,7 +35,7 @@ export const COMMIT_DELAY = 800;
 const CONFIRM_TIMEOUT = 15_000;
 
 export class ThermostatValveCard extends LitElement {
-  static styles = styles;
+  static styles = [styles, historyStyles];
   private config?: CardConfig;
   private ha?: HomeAssistant;
   /** Target the household is dialling in, not yet confirmed by HA. */
@@ -51,16 +46,11 @@ export class ThermostatValveCard extends LitElement {
   private epoch = 0;
   private commitTimer?: ReturnType<typeof setTimeout>;
   private confirmTimer?: ReturnType<typeof setTimeout>;
-  /** The history dialog: chosen range, loaded series and the hovered time. */
-  private range: Range = 24;
-  private series?: Series[];
-  private window?: [number, number];
-  private loading = false;
-  private historyError = "";
-  private hover?: number;
-  private historyTicket = 0;
-  private plotWidth = 600;
-  private resize?: ResizeObserver;
+  private history = new HistoryController<Series[]>(this, async (range, end) => {
+    const hass = this.ha;
+    if (!hass || !this.live) throw new Error(this.t("unavailable"));
+    return loadSeries(historyConnection({ callWS: hass.callWS?.bind(hass) }), this.sources(), hass.states, range, { now: end });
+  });
 
   get hass(): HomeAssistant | undefined {
     return this.ha;
@@ -80,28 +70,17 @@ export class ThermostatValveCard extends LitElement {
     const next = normalizeConfig(value);
     applyColorScheme(this, value.color_scheme, this.ha);
     if (next.entity !== this.config?.entity) this.reset();
+    else if (next.valve_entity !== this.config?.valve_entity || next.outdoor_entity !== this.config?.outdoor_entity || next.flow_entity !== this.config?.flow_entity || next.show_valve !== this.config?.show_valve) {
+      this.history.reset();
+      this.dialog?.close();
+    }
     this.config = next;
     this.setAttribute("appearance", next.appearance ?? "default");
     this.requestUpdate();
   }
-  protected updated(): void {
-    const plot = this.shadowRoot?.querySelector(".plot");
-    if (!plot || this.resize) return;
-    this.resize = new ResizeObserver(([entry]) => {
-      const width = Math.round(entry.contentRect.width);
-      // Redraw next frame, outside the observer's own layout pass.
-      if (width > 0 && Math.abs(width - this.plotWidth) > 4)
-        requestAnimationFrame(() => {
-          this.plotWidth = width;
-          this.requestUpdate();
-        });
-    });
-    this.resize.observe(plot);
-  }
   disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.resize?.disconnect();
-    this.resize = undefined;
+    this.dialog?.close();
     // A target the user already chose is still sent when the view closes.
     if (this.commitTimer) {
       clearTimeout(this.commitTimer);
@@ -124,10 +103,7 @@ export class ThermostatValveCard extends LitElement {
     this.draft = this.sent = undefined;
     this.sending = false;
     this.error = "";
-    this.historyTicket++;
-    this.series = this.window = this.hover = undefined;
-    this.loading = false;
-    this.historyError = "";
+    this.history.reset();
     this.dialog?.close();
   }
   private settle(): void {
@@ -207,61 +183,27 @@ export class ThermostatValveCard extends LitElement {
     const climate = this.climate;
     const out: Source[] = [];
     const v = climate ? valve(this.ha!, config, climate) : undefined;
-    if (v?.entityId) out.push({ key: "valve", entityId: v.entityId });
+    if (v?.entityId) out.push({ tag: "valve", color: 0, unit: "%", entityId: v.entityId });
     else if (v?.attribute)
       out.push({
-        key: "valve",
+        tag: "valve", color: 0, unit: "%",
         entityId: config.entity,
         attribute: v.attribute,
       });
     out.push({
-      key: "room",
+      tag: "room", color: 1, unit: this.unit,
       entityId: config.entity,
       attribute: "current_temperature",
     });
     if (config.outdoor_entity)
-      out.push({ key: "outdoor", entityId: config.outdoor_entity });
+      out.push({ tag: "outdoor", color: 2, entityId: config.outdoor_entity, unit: String(this.ha?.states[config.outdoor_entity]?.attributes.unit_of_measurement ?? this.unit) });
     if (config.flow_entity)
-      out.push({ key: "flow", entityId: config.flow_entity });
+      out.push({ tag: "flow", color: 3, entityId: config.flow_entity, unit: String(this.ha?.states[config.flow_entity]?.attributes.unit_of_measurement ?? this.unit) });
     return out;
   }
-  private async openHistory(): Promise<void> {
+  private async openHistory(event: Event): Promise<void> {
     if (!this.config || !this.ha) return;
-    await this.updateComplete;
-    const dialog = this.dialog;
-    if (dialog && !dialog.open) dialog.showModal();
-    void this.loadHistory();
-  }
-  private async loadHistory(range: Range = this.range): Promise<void> {
-    if (!this.ha) return;
-    const ticket = ++this.historyTicket;
-    this.range = range;
-    this.loading = true;
-    this.historyError = "";
-    this.hover = undefined;
-    this.requestUpdate();
-    const end = Date.now();
-    try {
-      const series = await loadHistory(this.ha, this.sources(), range, end);
-      if (ticket !== this.historyTicket) return;
-      this.series = series;
-      this.window = [end - range * 3_600_000, end];
-    } catch (error) {
-      if (ticket !== this.historyTicket) return;
-      this.series = this.window = undefined;
-      this.historyError = `${this.t("historyFailed")}: ${
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error && "message" in error
-            ? String(error.message)
-            : String(error)
-      }`;
-    }
-    this.loading = false;
-    this.requestUpdate();
-  }
-  private closeHistory(): void {
-    this.dialog?.close();
+    await openHistoryDialog(this.history, this.shadowRoot, this, historyStrings(this.ha).failed, event.currentTarget as HTMLElement);
   }
   private info(entityId?: string): void {
     if (!entityId) return;
@@ -314,7 +256,7 @@ export class ThermostatValveCard extends LitElement {
       data-valve
       aria-label=${`${label}. ${this.t("history")}`}
       title=${label}
-      @click=${() => void this.openHistory()}
+      @click=${(event: Event) => void this.openHistory(event)}
     >
       ${ring}
     </button>`;
@@ -383,7 +325,7 @@ export class ThermostatValveCard extends LitElement {
             class="name"
             data-name
             aria-label=${`${name}: ${this.t("history")}`}
-            @click=${() => void this.openHistory()}
+            @click=${(event: Event) => void this.openHistory(event)}
           >
             <span class="title">${name}</span>
             <span class="status" data-status>${this.statusLine(climate)}</span>
@@ -395,132 +337,28 @@ export class ThermostatValveCard extends LitElement {
       ${this.historyDialog(name)}`;
   }
   private historyDialog(name: string) {
-    const hour12 =
-      this.ha?.locale?.time_format === "12"
-        ? true
-        : this.ha?.locale?.time_format === "24"
-          ? false
-          : undefined;
-    const locale = formatLocale(this.ha);
-    const time = (ms: number, withDay: boolean) =>
-      new Intl.DateTimeFormat(
-        locale,
-        withDay
-          ? { weekday: "short", day: "numeric" }
-          : { hour: "2-digit", minute: "2-digit", hour12 },
-      ).format(ms);
-    const span = (hours: number) =>
-      new Intl.NumberFormat(locale, {
-        style: "unit",
-        unit: hours < 48 ? "hour" : "day",
-        unitDisplay: "short",
-      }).format(hours < 48 ? hours : hours / 24);
-    const reading = (s: Series, value: number | undefined) =>
-      value === undefined
-        ? "—"
-        : s.key === "valve"
-          ? formatPercent(this.ha, value)
-          : this.temperature(value, 1);
-    const series = this.series;
-    const window = this.window;
-    const at = this.hover;
-    return html`<dialog
-      id="history"
-      aria-labelledby="history-title"
-      @close=${() => {
-        this.historyTicket++;
-        this.hover = undefined;
-      }}
-    >
-      <div class="history-head">
-        <h2 id="history-title">${name}</h2>
-        <button
-          class="close"
-          data-close
-          aria-label=${this.t("close")}
-          title=${this.t("close")}
-          @click=${() => this.closeHistory()}
-        >
-          ×
-        </button>
-      </div>
-      <div class="ranges" role="group" aria-label=${this.t("history")}>
-        ${RANGES.map(
-          (hours) =>
-            html`<button
-              data-range=${hours}
-              aria-pressed=${String(this.range === hours)}
-              ?disabled=${this.loading && this.range === hours}
-              @click=${() => void this.loadHistory(hours)}
-            >
-              ${span(hours)}
-            </button>`,
-        )}
-      </div>
-      <div
-        class="plot"
-        aria-busy=${String(this.loading)}
-        @pointermove=${(e: PointerEvent) => {
-          const svg = (e.currentTarget as HTMLElement).querySelector("svg");
-          if (!svg || !window) return;
-          this.hover = timeAt(e, svg, window[0], window[1]);
-          this.requestUpdate();
-        }}
-        @pointerleave=${() => {
-          this.hover = undefined;
-          this.requestUpdate();
-        }}
-      >
-        ${
-          this.historyError
-            ? html`<p class="error" role="alert">${this.historyError}</p>`
-            : !series || !window
-              ? html`<p class="hint" role="status">${this.t("loading")}</p>`
-              : series.every((s) => s.points.every(([, v]) => v === undefined))
-                ? html`<p class="hint">${this.t("noHistory")}</p>`
-                : chart(
-                    series,
-                    window[0],
-                    window[1],
-                    at,
-                    {
-                      number: (v, d) => formatNumber(this.ha, v, d),
-                      percent: (v) => formatPercent(this.ha, v),
-                      time,
-                      label: `${this.t("history")}: ${name}`,
-                    },
-                    Math.max(280, this.plotWidth),
-                  )
-        }
-      </div>
-      <p class="when" aria-live="polite">
-        ${at === undefined ? this.t("now") : time(at, false)}
-      </p>
-      <div class="legend">
-        ${(series ?? []).map(
-          (s) =>
-            html`<button
-              class=${`item s-${s.key}`}
-              data-series=${s.key}
-              @click=${() => {
-                this.closeHistory();
-                this.info(s.entityId);
-              }}
-            >
-              <span class="swatch"></span>
-              <span class="label">${this.t(s.key)}</span>
-              <strong
-                >${reading(
-                  s,
-                  at === undefined
-                    ? s.points[s.points.length - 1]?.[1]
-                    : valueAt(s, at),
-                )}</strong
-              >
-            </button>`,
-        )}
-      </div>
-    </dialog>`;
+    const strings = historyStrings(this.ha);
+    const format = historyFormat(this.ha);
+    const reading = (series: Series, time?: number) => {
+      const entity = this.ha?.states[series.entityId];
+      const value = time === undefined
+        ? this.live && available(entity) ? numeric(series.attribute ? entity?.attributes[series.attribute] : entity?.state) : undefined
+        : valueAt(series, time);
+      return value === undefined ? strings.unavailable : series.tag === "valve" ? formatPercent(this.ha, value) : `${formatNumber(this.ha, value, 1)} ${series.unit}`;
+    };
+    return historyDialog(this.history, {
+      strings, format, subtitle: name,
+      chart: (data, [start, end], hover, width) => lineChart(data, start, end, hover,
+        { ...format, number: (value, digits) => formatNumber(this.ha, value, digits), label: `${strings.history}: ${name}` },
+        { width, domains: { "%": [0, 100] }, maxUnits: 3 }),
+      isEmpty: (data) => !data.some((series) => series.points.some(([, value]) => value !== undefined)),
+      timeAt: (event, svg, [start, end], data) => lineChartTimeAt(event, svg, start, end, Math.min(3, new Set(data.map((series) => series.unit)).size)),
+      legend: (data, time) => data.map((series) => ({
+        entityId: series.entityId, name: this.t(series.tag as TextKey), color: series.color,
+        value: reading(series, time),
+      })),
+      select: (id) => this.info(id),
+    });
   }
   getCardSize(): number {
     return 1;

@@ -104,12 +104,12 @@ Thermostats that use a low/high range (`heat_cool` with `target_temp_low` and `t
 
 ![History of valve opening, room, outdoor and flow temperature in one chart](docs/thermostat-valve-history.png)
 
-One chart for the room over the last 6 hours, 24 hours (the default) or 7 days:
+The bundled shared history view shows one chart for the room over the last 6 hours, 24 hours (the default) or 7 days:
 
-- the **valve opening** as a filled step area on the right-hand percent scale;
+- the **valve opening** on a fixed 0–100% right-hand scale;
 - the **room** temperature (the thermostat's `current_temperature`), and the **outdoor** and **flow** temperature when `outdoor_entity` and `flow_entity` are set, as lines on the left-hand temperature scale.
 
-Move the pointer or a finger across the chart to read every value at that moment; otherwise the legend shows the current values. Tapping a legend entry opens that entity in Home Assistant. A spell where a sensor was unavailable is left as a gap. The data comes from Home Assistant's recorder, so an entity the recorder excludes has no history. The outdoor and flow sensors are set per card; use the same ones on every room card (0.2.0).
+Move the pointer or a finger across the chart to read every value at that moment; otherwise the legend shows the current values. Tapping a legend entry opens that entity in Home Assistant. A spell where a sensor was unavailable is left as a gap. The data comes from Home Assistant's recorder, so an entity the recorder excludes has no history. Failed history requests offer **Try again**, and closing the dialog returns focus to the reading. Labels follow English or Bokmål and time formatting follows Home Assistant. No separate history resource is needed. The outdoor and flow sensors are set per card; use the same ones on every room card (0.2.0).
 
 ## Language and formats
 

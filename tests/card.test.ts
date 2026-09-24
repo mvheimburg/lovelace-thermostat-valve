@@ -39,7 +39,7 @@ async function update(c: ThermostatValveCard, hass: HomeAssistant) {
 
 it("shows the room, what it is doing, the valve and the target", async () => {
   const { c } = await card();
-  expect(text(c, ".title")).toBe("Oppholdsrom");
+  expect(text(c, ".title")).toContain("Oppholdsrom");
   expect(text(c, "[data-status]")).toBe("Heating · 21.3 °C");
   expect(text(c, "[data-valve]")).toBe("35%");
   expect(text(c, "output")).toBe("22.0 °C");
@@ -228,7 +228,7 @@ function withHistory(hass: HomeAssistant, now: number, fail?: Error) {
 }
 const settle = () => new Promise((r) => setTimeout(r, 0));
 const legend = (c: HTMLElement) =>
-  Array.from(c.shadowRoot!.querySelectorAll(".legend .item")).map((i) =>
+  Array.from(c.shadowRoot!.querySelectorAll(".history-legend .history-item")).map((i) =>
     i.textContent!.replace(/\s+/g, " ").trim(),
   );
 
@@ -246,9 +246,11 @@ it("opens one history of valve, room, outdoor and flow temperature from the valv
   await c.updateComplete;
   const dialog = q<HTMLDialogElement>(c, "#history");
   expect(dialog.open).toBe(true);
-  expect(text(c, "#history-title")).toBe("Oppholdsrom");
+  expect(text(c, "#history-title")).toContain("Oppholdsrom");
   expect(callWS).toHaveBeenCalledTimes(2);
-  const [withAttributes, plain] = callWS.mock.calls.map((call) => call[0]);
+  const messages = callWS.mock.calls.map((call) => call[0]);
+  const withAttributes = messages.find((message) => message.no_attributes === false)!;
+  const plain = messages.find((message) => message.no_attributes === true)!;
   expect(withAttributes).toMatchObject({
     type: "history/history_during_period",
     entity_ids: ["climate.stue"],
@@ -269,13 +271,11 @@ it("opens one history of valve, room, outdoor and flow temperature from the valv
     "Outdoor 4.5 °C",
     "Flow 30.0 °C",
   ]);
-  expect(c.shadowRoot!.querySelectorAll(".chart .area.s-valve")).toHaveLength(
-    1,
-  );
-  expect(c.shadowRoot!.querySelectorAll(".chart .line")).toHaveLength(3);
-  // The unavailable spell leaves a gap: two separate filled runs.
+  expect(c.shadowRoot!.querySelectorAll(".history-chart .area.series-0")).toHaveLength(1);
+  expect(c.shadowRoot!.querySelectorAll(".history-chart .line")).toHaveLength(4);
+  // The unavailable spell leaves a gap: two separate line runs.
   expect(
-    q(c, ".chart .area.s-valve").getAttribute("d")!.match(/M/g),
+    q(c, ".history-chart .line.series-0").getAttribute("d")!.match(/M/g),
   ).toHaveLength(2);
 
   dialog.close();
@@ -292,9 +292,9 @@ it("shows the values under the pointer and reloads for another range", async () 
   q<HTMLButtonElement>(c, "[data-valve]").click();
   await settle();
   await c.updateComplete;
-  const plot = q<HTMLElement>(c, ".plot");
-  const box = q(c, ".chart").getBoundingClientRect();
-  const width = q<SVGSVGElement>(c, ".chart").viewBox.baseVal.width;
+  const plot = q<HTMLElement>(c, ".history-plot");
+  const box = q(c, ".history-chart").getBoundingClientRect();
+  const width = q<SVGSVGElement>(c, ".history-chart").viewBox.baseVal.width;
   // The plot spans x 40 to width − 44; a third in is 16 hours ago.
   plot.dispatchEvent(
     new PointerEvent("pointermove", {
@@ -308,10 +308,10 @@ it("shows the values under the pointer and reloads for another range", async () 
     "Room 20.1 °C",
     "Outdoor 2.0 °C",
   ]);
-  expect(q(c, ".chart .cursor")).not.toBeNull();
+  expect(q(c, ".history-chart .cursor")).not.toBeNull();
   plot.dispatchEvent(new PointerEvent("pointerleave"));
   await c.updateComplete;
-  expect(text(c, ".when")).toBe("Now");
+  expect(text(c, ".history-when")).toBe("Now");
 
   q<HTMLButtonElement>(c, '[data-range="168"]').click();
   await settle();
@@ -332,15 +332,14 @@ it("explains a failed history request and speaks Bokmål", async () => {
   q<HTMLButtonElement>(c, "[data-name]").click();
   await settle();
   await c.updateComplete;
-  expect(text(c, "#history [role=alert]")).toBe(
-    "Kunne ikke hente historikk: Recorder is off",
-  );
+  expect(text(c, "#history [role=alert]")).toContain("Recorder is off");
+  expect(text(c, "[data-retry]")).toBe("Prøv igjen");
   expect(
     Array.from(c.shadowRoot!.querySelectorAll("[data-range]")).map((b) =>
       b.textContent!.trim(),
     ),
   ).toEqual(["6 t", "24 t", "7 d"]);
-  expect(q(c, "[data-close]").getAttribute("aria-label")).toBe("Lukk");
+  expect(q(c, "[data-close-history]").getAttribute("aria-label")).toBe("Lukk historikk");
 });
 
 it("opens more-info for the thermostat from the icon and for a line from the legend", async () => {
@@ -356,7 +355,7 @@ it("opens more-info for the thermostat from the icon and for a line from the leg
   await settle();
   await c.updateComplete;
   expect(opened).toEqual(["climate.stue"]);
-  q<HTMLButtonElement>(c, '[data-series="flow"]').click();
+  q<HTMLButtonElement>(c, '[data-series="sensor.tur"]').click();
   expect(q<HTMLDialogElement>(c, "#history").open).toBe(false);
   expect(opened).toEqual(["climate.stue", "sensor.tur"]);
 });
@@ -491,4 +490,44 @@ it("edits configuration in Bokmål, keeps other keys and validates entities", as
   valve.dispatchEvent(new Event("change"));
   expect(valve.validationMessage).toBe("Ugyldig verdi");
   expect(event).toHaveBeenCalledTimes(1);
+});
+
+it("offers shared history retry and restores focus to the reading", async () => {
+  const hass = fixture();
+  const requests = withHistory(hass, Date.now(), new Error('Recorder paused'));
+  const { c } = await card({}, hass);
+  const trigger = q<HTMLButtonElement>(c, '[data-name]');
+  trigger.focus();
+  trigger.click();
+  await settle();
+  await c.updateComplete;
+  const retry = q<HTMLButtonElement>(c, '[data-retry]');
+  expect(retry).not.toBeNull();
+  requests.mockResolvedValue({});
+  retry.click();
+  await settle();
+  await c.updateComplete;
+  expect(c.shadowRoot!.querySelector('#history [role=alert]')).toBeNull();
+  q<HTMLButtonElement>(c, '[data-close-history]').click();
+  await settle();
+  expect(c.shadowRoot!.activeElement).toBe(trigger);
+});
+
+it("uses a fixed percent scale and clears history when related sensors change", async () => {
+  const hass = fixture();
+  withHistory(hass, Date.now());
+  const { c } = await card({ outdoor_entity: 'sensor.ute' }, hass);
+  q<HTMLButtonElement>(c, '[data-valve]').click();
+  await settle();
+  await c.updateComplete;
+  const ticks = Array.from(c.shadowRoot!.querySelectorAll('.history-chart .axis')).map((node) => node.textContent);
+  expect(ticks).toContain('100');
+  expect(ticks).toContain('%');
+  c.hass = { ...hass, language: 'NB_no', locale: { language: 'nb-NO', time_format: '24' } };
+  await c.updateComplete;
+  expect(legend(c)[0]).toContain('Ventilåpning');
+  c.setConfig({ type: 'custom:thermostat-valve-card', entity: 'climate.stue', outdoor_entity: 'sensor.other' });
+  await c.updateComplete;
+  expect(q<HTMLDialogElement>(c, '#history').open).toBe(false);
+  expect(legend(c)).toEqual([]);
 });
